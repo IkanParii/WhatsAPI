@@ -3,722 +3,1078 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WhatsAPI - Gateway Dashboard</title>
+  <title>WhatsAPI - Gateway Console</title>
   <script src="/qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    if (typeof QRCode === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>');
+    }
+  </script>
   <style>
     :root {
-      --bg: #0f172a;
-      --card-bg: #1e293b;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --primary: #25d366;
-      --primary-hover: #1ebd5a;
-      --danger: #ef4444;
-      --danger-hover: #dc2626;
-      --border: #334155;
-      --badge-blue: #0284c7;
-      --badge-purple: #9333ea;
+      --bg: #09090b;
+      --card-bg: #121215;
+      --card-elevated: #18181b;
+      --border: #27272a;
+      --border-subtle: #1e1e22;
+      --border-focus: #3f3f46;
+      --text: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --text-dim: #71717a;
+      --accent: #10b981;
+      --accent-muted: rgba(16, 185, 129, 0.12);
+      --accent-hover: #059669;
+      --danger: #f43f5e;
+      --danger-muted: rgba(244, 63, 94, 0.12);
+      --warning: #f59e0b;
+      --code-bg: #0d0d10;
+      --radius: 8px;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
 
     body {
       background-color: var(--bg);
       color: var(--text);
-      padding: 24px 16px;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
-      min-height: 100vh;
-      align-items: flex-start;
+      padding: 0 0 60px 0;
     }
 
-    .container {
+    .app-shell {
       width: 100%;
-      max-width: 820px;
+      max-width: 1000px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
+      padding: 0 16px;
     }
 
-    #auth-screen {
-      max-width: 400px;
-      margin: 60px auto 0;
-    }
-
-    header {
+    /* Header */
+    header.top-bar {
       display: flex;
+      align-items: center;
       justify-content: space-between;
-      align-items: center;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border);
+      padding: 18px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 4px;
     }
 
-    .title {
-      font-size: 1.5rem;
-      font-weight: 700;
+    .brand {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
     }
 
-    .title span {
-      color: var(--primary);
-    }
-
-    .header-actions {
+    .brand-mark {
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      background: #18181b;
+      border: 1px solid var(--border);
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: center;
+      color: var(--text);
     }
 
-    .user-pill {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      background: #0f172a;
-      padding: 6px 12px;
-      border-radius: 9999px;
-      border: 1px solid var(--border);
+    .brand-name {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
     }
 
-    .btn-logout {
-      background: transparent;
-      color: var(--text-muted);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 6px 12px;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 0.2s;
+    .brand-tag {
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--text-dim);
+      background: var(--card-elevated);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border-subtle);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
-    .btn-logout:hover {
-      background: var(--danger);
-      color: #fff;
-      border-color: var(--danger);
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
-    .status-badge {
+    .status-indicator {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
+      gap: 7px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 4px 10px;
       border-radius: 9999px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      background: #334155;
-      color: #94a3b8;
+      background: var(--card-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
     }
 
-    .status-badge.connected {
-      background: #064e3b;
+    .status-indicator.connected {
       color: #34d399;
+      border-color: rgba(16, 185, 129, 0.25);
+      background: var(--accent-muted);
     }
 
-    .status-badge.disconnected {
-      background: #7f1d1d;
-      color: #f87171;
+    .status-indicator.disconnected {
+      color: #fb7185;
+      border-color: rgba(244, 63, 94, 0.25);
+      background: var(--danger-muted);
     }
 
     .status-dot {
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: currentColor;
     }
 
+    .status-indicator.connected .status-dot {
+      box-shadow: 0 0 6px currentColor;
+    }
+
+    .user-pill {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      font-family: ui-monospace, monospace;
+      padding: 4px 6px;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: var(--border-focus);
+      background: var(--card-elevated);
+    }
+
+    /* Cards */
     .card {
       background: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 22px;
+      border-radius: var(--radius);
+      padding: 20px;
+      position: relative;
     }
 
-    .card h2 {
-      font-size: 1.15rem;
-      margin-bottom: 14px;
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 0.92rem;
       font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.01em;
     }
 
-    .form-group {
+    .card-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      line-height: 1.4;
+      margin-top: -6px;
+      margin-bottom: 14px;
+    }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 2px;
+      overflow-x: auto;
+    }
+
+    .nav-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 6px 6px 0 0;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .nav-tab:hover {
+      color: var(--text-muted);
+    }
+
+    .nav-tab.active {
+      color: var(--text);
+      border-bottom-color: var(--text);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .view-section {
+      display: none;
+      animation: fadeIn 0.15s ease;
+    }
+
+    .view-section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(2px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Grid */
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 820px) {
+      .grid-2col {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Forms & Inputs */
+    .field {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
-    label {
-      font-size: 0.875rem;
+    .field-label {
+      font-size: 0.78rem;
+      font-weight: 500;
       color: var(--text-muted);
     }
 
     input, textarea {
       width: 100%;
-      padding: 10px 12px;
-      background: #0f172a;
+      background: var(--card-elevated);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 6px;
       color: var(--text);
-      font-size: 0.95rem;
+      font-size: 0.85rem;
+      padding: 9px 12px;
       outline: none;
-      transition: border-color 0.2s;
+      transition: border-color 0.15s ease;
     }
 
     input:focus, textarea:focus {
-      border-color: var(--primary);
+      border-color: var(--border-focus);
     }
 
     textarea {
       resize: vertical;
       min-height: 80px;
+      line-height: 1.4;
     }
 
-    .btn-primary {
-      background: var(--primary);
-      color: #0f172a;
-      font-weight: 600;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 16px;
-      cursor: pointer;
-      font-size: 0.95rem;
-      transition: background 0.2s;
-      display: flex;
+    .mono-input {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.8rem;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-    }
-
-    .btn-primary:hover {
-      background: var(--primary-hover);
-    }
-
-    .btn-secondary {
-      background: #334155;
-      color: var(--text);
-      font-weight: 600;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 16px;
-      cursor: pointer;
-      font-size: 0.95rem;
-      transition: background 0.2s;
-    }
-
-    .btn-secondary:hover {
-      background: #475569;
-    }
-
-    .btn-primary:disabled, .btn-secondary:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    #qr-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      padding: 16px;
-      background: #0f172a;
-      border-radius: 8px;
-      min-height: 220px;
-      justify-content: center;
-    }
-
-    #qrcode {
-      background: #fff;
-      padding: 12px;
-      border-radius: 8px;
-      display: inline-block;
-    }
-
-    .alert {
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      margin-top: 12px;
-      display: none;
-    }
-
-    .alert.success {
-      background: #064e3b;
-      color: #34d399;
-      display: block;
-    }
-
-    .alert.error {
-      background: #7f1d1d;
-      color: #f87171;
-      display: block;
-    }
-
-    .info-box {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      line-height: 1.5;
-    }
-
-    .info-box code {
-      background: #0f172a;
-      padding: 2px 6px;
-      border-radius: 4px;
-      color: var(--primary);
-    }
-
-    /* Log Item Styling */
-    .log-item {
-      background: #0f172a;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
-      font-size: 0.875rem;
-      display: flex;
-      flex-direction: column;
       gap: 6px;
-    }
-
-    .log-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .log-sender {
-      font-weight: 600;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .badge {
-      font-size: 0.72rem;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-
-    .badge-cmd {
-      background: #7c3aed;
-      color: #fff;
-    }
-
-    .badge-group {
-      background: #0284c7;
-      color: #fff;
-    }
-
-    .badge-ok {
-      background: #064e3b;
-      color: #34d399;
-    }
-
-    .badge-err {
-      background: #7f1d1d;
-      color: #f87171;
-    }
-
-    .badge-neutral {
-      background: #334155;
-      color: #94a3b8;
-    }
-
-    .log-msg {
-      color: var(--text-muted);
-      word-break: break-all;
-    }
-
-    .log-time {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-
-    /* Tabs & Code Box Styling */
-    .tabs-nav {
-      display: flex;
-      gap: 4px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 14px;
-      overflow-x: auto;
-    }
-
-    .tab-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
       padding: 8px 14px;
-      font-size: 0.85rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 500;
       cursor: pointer;
-      border-bottom: 2px solid transparent;
-      font-weight: 600;
-      transition: all 0.2s;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
       white-space: nowrap;
     }
 
-    .tab-btn:hover {
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--text);
+      color: var(--bg);
+      font-weight: 600;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #e4e4e7;
+    }
+
+    .btn-secondary {
+      background: var(--card-elevated);
       color: var(--text);
+      border-color: var(--border);
     }
 
-    .tab-btn.active {
-      color: var(--primary);
-      border-bottom-color: var(--primary);
+    .btn-secondary:hover:not(:disabled) {
+      border-color: var(--border-focus);
+      background: #202025;
     }
 
-    .tab-pane {
+    .alert-box {
+      padding: 9px 12px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      margin-top: 10px;
       display: none;
+      border: 1px solid transparent;
     }
 
-    .tab-pane.active {
+    .alert-box.success {
       display: block;
+      background: var(--accent-muted);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: #34d399;
     }
 
-    .code-box {
-      background: #090d16;
+    .alert-box.error {
+      display: block;
+      background: var(--danger-muted);
+      border-color: rgba(244, 63, 94, 0.3);
+      color: #fb7185;
+    }
+
+    /* QR Scan Hub (Centered & Prominent) */
+    .qr-hub {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 36px 20px;
+      background: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: var(--radius);
+      gap: 20px;
+    }
+
+    .qr-frame {
+      background: #ffffff;
       padding: 14px;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+      width: 260px;
+      height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       position: relative;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.85rem;
-      color: #38bdf8;
-      overflow-x: auto;
-      margin: 10px 0 16px;
+    }
+
+    .qr-frame img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      image-rendering: pixelated;
+    }
+
+    .qr-spinner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      color: #71717a;
+      font-size: 0.8rem;
+      text-align: center;
+    }
+
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid #e4e4e7;
+      border-top-color: #18181b;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .qr-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 440px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
       line-height: 1.5;
     }
 
-    .code-box pre {
-      margin: 0;
-      white-space: pre;
-      font-family: inherit;
+    .qr-step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
     }
 
-    .btn-copy {
+    .qr-step-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--card-elevated);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 0.72rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* Connected State Card */
+    .connected-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 16px 20px;
+      background: var(--accent-muted);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: var(--radius);
+    }
+
+    /* Activity Rows */
+    .log-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 380px;
+      overflow-y: auto;
+    }
+
+    .log-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      background: var(--card-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 11px 14px;
+      font-size: 0.8rem;
+    }
+
+    .log-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .log-source {
+      font-family: ui-monospace, monospace;
+      font-size: 0.78rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tag {
+      font-size: 0.68rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 1px 5px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+    }
+
+    .tag-cmd {
+      background: rgba(147, 51, 234, 0.12);
+      border-color: rgba(147, 51, 234, 0.3);
+      color: #c084fc;
+    }
+
+    .tag-group {
+      background: rgba(2, 132, 199, 0.12);
+      border-color: rgba(2, 132, 199, 0.3);
+      color: #38bdf8;
+    }
+
+    .tag-ok {
+      background: var(--accent-muted);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: #34d399;
+    }
+
+    .tag-err {
+      background: var(--danger-muted);
+      border-color: rgba(244, 63, 94, 0.3);
+      color: #fb7185;
+    }
+
+    .tag-muted {
+      color: var(--text-dim);
+    }
+
+    .log-time {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      font-family: ui-monospace, monospace;
+    }
+
+    .log-body {
+      color: var(--text-muted);
+      word-break: break-all;
+      line-height: 1.4;
+    }
+
+    /* Group Rows */
+    .group-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .group-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: var(--card-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 9px 12px;
+    }
+
+    .group-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .group-name {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .group-jid {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      font-family: ui-monospace, monospace;
+      margin-top: 1px;
+    }
+
+    /* Code Snippets */
+    .tabs-sub {
+      display: flex;
+      gap: 2px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+      overflow-x: auto;
+    }
+
+    .tab-sub-item {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      padding: 6px 12px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .tab-sub-item.active {
+      color: var(--text);
+      border-bottom-color: var(--text);
+    }
+
+    .code-container {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px;
+      position: relative;
+      margin-top: 8px;
+    }
+
+    .code-container pre {
+      margin: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.78rem;
+      color: #e4e4e7;
+      line-height: 1.5;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    .btn-copy-code {
       position: absolute;
       top: 8px;
       right: 8px;
-      background: #1e293b;
+      background: var(--card-elevated);
       border: 1px solid var(--border);
       color: var(--text-muted);
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 0.75rem;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 0.72rem;
+      font-weight: 500;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s ease;
     }
 
-    .btn-copy:hover {
-      background: var(--primary);
-      color: #0f172a;
+    .btn-copy-code:hover {
+      color: var(--text);
+      border-color: var(--border-focus);
+    }
+
+    /* Auth View */
+    #auth-screen {
+      max-width: 360px;
+      margin: 100px auto 0;
+      width: 100%;
     }
   </style>
 </head>
 <body>
 
-  <!-- LOGIN SCREEN -->
-  <div class="container" id="auth-screen">
-    <div class="card" style="text-align: center;">
-      <div class="title" style="justify-content: center; margin-bottom: 8px;">
-        <span>WhatsAPI</span> Login
+  <!-- AUTH SCREEN -->
+  <div class="app-shell" id="auth-screen">
+    <div class="card" style="padding: 26px;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+        <div class="brand-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </div>
+        <span style="font-weight: 600; font-size: 0.95rem; letter-spacing: -0.01em;">WhatsAPI Gateway</span>
       </div>
-      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">
-        Masuk untuk mengelola bot dan koneksi WhatsApp
+      <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 22px;">
+        Masuk untuk mengelola sesi WhatsApp dan integrasi Webhook.
       </p>
 
-      <form id="login-form" style="text-align: left;">
-        <div class="form-group">
-          <label for="login-username">Username</label>
+      <form id="login-form">
+        <div class="field">
+          <label class="field-label" for="login-username">Username</label>
           <input type="text" id="login-username" value="admin" required autocomplete="username" />
         </div>
-        <div class="form-group">
-          <label for="login-password">Password</label>
+        <div class="field">
+          <label class="field-label" for="login-password">Password</label>
           <input type="password" id="login-password" placeholder="Password dari .env" required autocomplete="current-password" />
         </div>
-        <button type="submit" id="login-btn" class="btn-primary" style="width: 100%;">
-          Masuk ke Dashboard
+        <button type="submit" id="login-btn" class="btn btn-primary" style="width: 100%; margin-top: 6px;">
+          Masuk ke Konsol
         </button>
-        <div id="login-result" class="alert"></div>
+        <div id="login-result" class="alert-box"></div>
       </form>
-      <div class="info-box" style="margin-top: 16px;">
-        Password di-hash aman menggunakan algoritma <code>scrypt</code>.
-      </div>
     </div>
   </div>
 
-  <!-- MAIN DASHBOARD -->
-  <div class="container" id="dashboard-screen" style="display: none;">
-    <header>
-      <div class="title">
-        <span>WhatsAPI</span> Gateway
+  <!-- DASHBOARD CONSOLE -->
+  <div class="app-shell" id="dashboard-screen" style="display: none;">
+    <!-- Header -->
+    <header class="top-bar">
+      <div class="brand">
+        <div class="brand-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <span class="brand-name">WhatsAPI</span>
+        <span class="brand-tag">Gateway</span>
       </div>
-      <div class="header-actions">
-        <div id="status-badge" class="status-badge">
+
+      <div class="top-actions">
+        <div id="status-badge" class="status-indicator">
           <span class="status-dot"></span>
-          <span id="status-text">Memeriksa status...</span>
+          <span id="status-text">Memeriksa status</span>
         </div>
         <span class="user-pill">admin</span>
-        <button id="logout-btn" class="btn-logout">Keluar</button>
+        <button id="logout-btn" class="btn-ghost" title="Keluar dari konsol">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+          Keluar
+        </button>
       </div>
     </header>
 
-    <!-- QR Code / Status Section -->
-    <div class="card" id="connection-card">
-      <h2>Status Koneksi WhatsApp</h2>
-      <div id="qr-section">
-        <div id="qr-container">
-          <div id="qrcode"></div>
-          <p id="qr-hint" style="color: var(--text-muted); font-size: 0.9rem;">
-            Buka WhatsApp di HP &gt; Perangkat Tertaut &gt; Tautkan Perangkat lalu scan QR ini.
+    <!-- Top Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="nav-tab active" onclick="switchMainTab('connection')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+        Sesi WhatsApp
+      </button>
+      <button class="nav-tab" onclick="switchMainTab('messaging')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Kirim & Grup
+      </button>
+      <button class="nav-tab" onclick="switchMainTab('integration')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
+        Integrasi & Webhook
+      </button>
+      <button class="nav-tab" onclick="switchMainTab('activity')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Log Aktivitas
+      </button>
+      <button class="nav-tab" onclick="switchMainTab('docs')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        Dokumentasi API
+      </button>
+    </nav>
+
+    <!-- TAB 1: CONNECTION (QR CODE SCAN / STATUS) -->
+    <div id="view-connection" class="view-section active">
+      <!-- Connected Banner -->
+      <div id="connected-banner" class="connected-banner" style="display: none;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span class="status-dot" style="background: var(--accent); width: 8px; height: 8px; box-shadow: 0 0 8px var(--accent);"></span>
+          <div>
+            <div style="font-weight: 600; font-size: 0.9rem; color: #34d399;">WhatsApp Terhubung & Siap Digunakan</div>
+            <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 2px;">
+              Gateway online. Pesan masuk otomatis di-forward ke Webhook dan siap mengirim pesan via API.
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-secondary" onclick="requestResetSession()" title="Logout dan hubungkan nomor lain">
+          Putuskan / Reset Sesi
+        </button>
+      </div>
+
+      <!-- Disconnected QR Hub -->
+      <div id="qr-hub" class="qr-hub">
+        <div style="text-align: center; max-width: 480px;">
+          <div style="font-weight: 600; font-size: 1.1rem; letter-spacing: -0.01em; margin-bottom: 6px;">
+            Hubungkan WhatsApp
+          </div>
+          <div style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.4;">
+            Pindai kode QR menggunakan akun WhatsApp ponsel Anda untuk mengaktifkan gateway.
+          </div>
+        </div>
+
+        <div class="qr-frame">
+          <div id="qrcode-box" style="display: none; align-items: center; justify-content: center;"></div>
+          <img id="qr-image" src="" alt="WhatsApp QR Code" style="display: none;" />
+          <div id="qr-spinner" class="qr-spinner">
+            <div class="spinner"></div>
+            <span>Menghubungkan ke server WhatsApp...</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button id="refresh-qr-btn" class="btn btn-secondary" onclick="requestReconnect()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+            Minta QR Baru
+          </button>
+          <button class="btn btn-secondary" onclick="requestResetSession()" title="Bersihkan sesi gantung dan minta QR baru">
+            Reset Sesi
+          </button>
+        </div>
+
+        <div class="qr-steps">
+          <div class="qr-step-item">
+            <span class="qr-step-num">1</span>
+            <span>Buka WhatsApp di ponsel Anda.</span>
+          </div>
+          <div class="qr-step-item">
+            <span class="qr-step-num">2</span>
+            <span>Buka <strong>Menu (tiga titik)</strong> atau <strong>Pengaturan</strong> &rarr; <strong>Perangkat Tertaut</strong>.</span>
+          </div>
+          <div class="qr-step-item">
+            <span class="qr-step-num">3</span>
+            <span>Ketuk <strong>Tautkan Perangkat</strong> lalu arahkan kamera ke kode QR di atas.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: MESSAGING & GROUPS -->
+    <div id="view-messaging" class="view-section">
+      <div class="grid-2col">
+        <!-- Send Message Form -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              Kirim Pesan Teks
+            </div>
+          </div>
+          <div class="card-subtitle">
+            Kirim pesan langsung ke nomor kontak atau ke grup WhatsApp.
+          </div>
+
+          <form id="send-form">
+            <div class="field">
+              <label class="field-label" for="recipient">Penerima (Nomor HP / JID Grup)</label>
+              <input type="text" id="recipient" placeholder="628123456789 atau 12036302xxxx@g.us" required class="mono-input" />
+            </div>
+            <div class="field">
+              <label class="field-label" for="message">Isi Pesan</label>
+              <textarea id="message" placeholder="Tulis isi pesan yang ingin dikirim..." required></textarea>
+            </div>
+            <button type="submit" id="send-btn" class="btn btn-primary">
+              Kirim Pesan
+            </button>
+            <div id="send-result" class="alert-box"></div>
+          </form>
+        </div>
+
+        <!-- Groups List -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Daftar Grup WhatsApp
+            </div>
+            <button id="refresh-groups-btn" class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.72rem;" onclick="loadGroups()">
+              Refresh
+            </button>
+          </div>
+          <div class="card-subtitle">
+            Salin ID JID grup untuk digunakan pada parameter tujuan <code>to</code>.
+          </div>
+
+          <div id="groups-container" class="group-stream">
+            <p style="color: var(--text-dim); font-size: 0.78rem; text-align: center; padding: 20px;">
+              Hubungkan WhatsApp terlebih dahulu lalu klik Refresh.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: INTEGRATION & WEBHOOK -->
+    <div id="view-integration" class="view-section">
+      <div class="grid-2col">
+        <!-- API Key Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
+              API Key Programmatik
+            </div>
+          </div>
+          <div class="card-subtitle">
+            Kunci rahasia untuk header <code>x-api-key</code> saat mengakses endpoint API dari luar.
+          </div>
+
+          <div style="display: flex; gap: 6px;">
+            <input type="password" id="apikey-display" value="" readonly class="mono-input" style="cursor: default;" />
+            <button id="apikey-toggle" class="btn btn-secondary" onclick="toggleApiKeyVisibility()">
+              Tampilkan
+            </button>
+            <button class="btn btn-secondary" onclick="copyApiKey()">
+              Salin
+            </button>
+          </div>
+          <div id="apikey-copy-msg" class="alert-box"></div>
+        </div>
+
+        <!-- Webhook Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              Webhook URL (Forwarder)
+            </div>
+          </div>
+          <div class="card-subtitle">
+            Pesan masuk diteruskan ke URL ini melalui request HTTP POST asinkron.
+          </div>
+
+          <form id="webhook-form">
+            <div class="field">
+              <input type="url" id="webhook-url" placeholder="https://domain.com/api/webhook" class="mono-input" />
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button type="submit" id="save-webhook-btn" class="btn btn-primary">
+                Simpan Webhook
+              </button>
+              <button type="button" id="test-webhook-btn" class="btn btn-secondary">
+                Test Ping
+              </button>
+            </div>
+            <div id="webhook-result" class="alert-box"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: LIVE ACTIVITY -->
+    <div id="view-activity" class="view-section">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Log Pesan Masuk & Aktivitas Webhook
+          </div>
+          <span id="log-count" style="font-size: 0.72rem; color: var(--text-dim); font-family: ui-monospace, monospace;">0 aktivitas</span>
+        </div>
+
+        <div id="logs-container" class="log-stream">
+          <p style="color: var(--text-dim); font-size: 0.78rem; text-align: center; padding: 24px;">
+            Belum ada pesan masuk tercatat.
           </p>
-          <button type="button" class="btn-secondary" style="margin-top: 10px; font-size: 0.8rem; padding: 4px 10px;" onclick="requestReconnect()">Refresh QR</button>
         </div>
       </div>
-      <div id="connected-section" style="display: none; text-align: center; padding: 24px;">
-        <h3 style="color: var(--primary); margin-bottom: 8px;">WhatsApp Terhubung</h3>
-        <p style="color: var(--text-muted); font-size: 0.9rem;">
-          Gateway aktif dan siap mengirim/menerima pesan. Pesan masuk otomatis di-forward ke Webhook.
-        </p>
-      </div>
     </div>
 
-    <!-- API Key Section -->
-    <div class="card">
-      <h2>API Key Programmatik</h2>
-      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 12px;">
-        Gunakan kunci ini pada header <code>x-api-key</code> untuk mengakses API dari luar.
-      </p>
-      <div style="display: flex; gap: 8px; align-items: center;">
-        <input type="password" id="apikey-input" value="" readonly style="flex: 1; font-family: monospace; background: #0f172a;" />
-        <button type="button" id="apikey-toggle-btn" class="btn-secondary" onclick="toggleApiKey()">Tampilkan</button>
-        <button type="button" class="btn-secondary" onclick="copyApiKey()">Salin</button>
-      </div>
-      <div id="apikey-copy-msg" class="alert" style="margin-top: 8px;"></div>
-    </div>
-
-    <!-- Webhook Forwarder Configuration -->
-    <div class="card">
-      <h2>Konfigurasi Webhook URL (Forwarder Pesan)</h2>
-      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 12px;">
-        Setiap pesan masuk (personal & grup) akan diteruskan ke URL ini melalui request HTTP POST.
-      </p>
-      <form id="webhook-form">
-        <div class="form-group">
-          <label for="webhook-url">Webhook URL Tujuan</label>
-          <input type="url" id="webhook-url" placeholder="https://webhook.site/xxx atau http://backend:8000/wa-webhook" />
+    <!-- TAB 5: DOCUMENTATION -->
+    <div id="view-docs" class="view-section">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            Panduan & Contoh Integrasi API
+          </div>
         </div>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button type="submit" id="save-webhook-btn" class="btn-primary">
-            <span>Simpan Webhook</span>
-          </button>
-          <button type="button" id="test-webhook-btn" class="btn-secondary">
-            <span>Test Ping Webhook</span>
-          </button>
+        <div class="card-subtitle">
+          Contoh pemanggilan API <code>POST /send</code> dan spesifikasi format Webhook.
         </div>
-        <div id="webhook-result" class="alert"></div>
-      </form>
-    </div>
 
-    <!-- Live Activity Log -->
-    <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-        <h2>Log Pesan Masuk & Webhook (Live)</h2>
-        <span id="log-count" style="font-size: 0.8rem; color: var(--text-muted);">0 aktivitas</span>
-      </div>
-      <div id="logs-container" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
-        <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 16px;">
-          Belum ada pesan masuk tercatat...
-        </p>
-      </div>
-    </div>
-
-    <!-- Message Sender Section -->
-    <div class="card">
-      <h2>Kirim Pesan WhatsApp (Test GUI)</h2>
-      <form id="send-form">
-        <div class="form-group">
-          <label for="recipient">Nomor Tujuan / ID Grup</label>
-          <input type="text" id="recipient" placeholder="Contoh: 628123456789 atau 12036302xxxx@g.us" required />
+        <div class="tabs-sub">
+          <button class="tab-sub-item active" onclick="switchDocSub('curl')">cURL</button>
+          <button class="tab-sub-item" onclick="switchDocSub('node')">Node.js</button>
+          <button class="tab-sub-item" onclick="switchDocSub('python')">Python</button>
+          <button class="tab-sub-item" onclick="switchDocSub('php')">PHP</button>
+          <button class="tab-sub-item" onclick="switchDocSub('webhook')">Schema Webhook</button>
         </div>
-        <div class="form-group">
-          <label for="message">Isi Pesan</label>
-          <textarea id="message" placeholder="Ketik pesan yang ingin dikirim..." required></textarea>
-        </div>
-        <button type="submit" id="send-btn" class="btn-primary">
-          <span>Kirim Pesan</span>
-        </button>
-        <div id="send-result" class="alert"></div>
-      </form>
-    </div>
 
-    <!-- Groups Section -->
-    <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <h2>Daftar Grup WhatsApp</h2>
-        <button type="button" id="refresh-groups-btn" class="btn-secondary" style="font-size: 0.8rem; padding: 6px 12px;" onclick="loadGroups()">
-          Refresh
-        </button>
-      </div>
-      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 12px;">
-        Daftar grup yang diikuti oleh nomor aktif. Salin JID untuk mengirim pesan ke grup via API.
-      </p>
-      <div id="groups-container" style="max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
-        <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 16px;">
-          Hubungkan WhatsApp terlebih dahulu lalu klik Refresh.
-        </p>
-      </div>
-    </div>
-
-    <!-- INTERACTIVE DOCUMENTATION SECTION -->
-    <div class="card">
-      <h2>Dokumentasi &amp; Contoh Integrasi API</h2>
-      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">
-        Gunakan contoh kode di bawah ini untuk mengirim pesan WhatsApp atau menerima Webhook dari aplikasi Anda.
-      </p>
-
-      <div class="tabs-nav">
-        <button class="tab-btn active" onclick="switchDocTab('curl')">cURL</button>
-        <button class="tab-btn" onclick="switchDocTab('node')">Node.js</button>
-        <button class="tab-btn" onclick="switchDocTab('python')">Python</button>
-        <button class="tab-btn" onclick="switchDocTab('php')">PHP</button>
-        <button class="tab-btn" onclick="switchDocTab('webhook')">Format Webhook</button>
-        <button class="tab-btn" onclick="switchDocTab('rules')">Aturan Nomor & Bot</button>
-      </div>
-
-      <!-- Tab cURL -->
-      <div id="doc-curl" class="tab-pane active">
-        <p style="font-size: 0.85rem; color: var(--text-muted);">Contoh kirim pesan menggunakan cURL di terminal:</p>
-        <div class="code-box">
-          <button class="btn-copy" onclick="copyCode(this)">Salin</button>
-          <pre id="code-curl">curl -X POST <span class="api-url">http://localhost:3000</span>/send \
+        <!-- Doc: cURL -->
+        <div id="doc-sub-curl" class="tab-panel active">
+          <div class="code-container">
+            <button class="btn-copy-code" onclick="copyCode(this)">Salin</button>
+            <pre>curl -X POST <span class="api-url">http://localhost:3000</span>/send \
   -H "Content-Type: application/json" \
-  -H "x-api-key: <span class="api-key">KUNCI_API_ANDA</span>" \
+  -H "x-api-key: <span class="api-key">API_KEY_ANDA</span>" \
   -d '{
     "to": "628123456789",
-    "message": "Halo! Pesan terkirim otomatis dari API."
+    "message": "Halo dari WhatsAPI Gateway"
   }'</pre>
+          </div>
         </div>
-      </div>
 
-      <!-- Tab Node.js -->
-      <div id="doc-node" class="tab-pane">
-        <p style="font-size: 0.85rem; color: var(--text-muted);">Contoh kirim pesan menggunakan fetch di Node.js / JavaScript:</p>
-        <div class="code-box">
-          <button class="btn-copy" onclick="copyCode(this)">Salin</button>
-          <pre id="code-node">const res = await fetch('<span class="api-url">http://localhost:3000</span>/send', {
+        <!-- Doc: Node -->
+        <div id="doc-sub-node" class="tab-panel" style="display: none;">
+          <div class="code-container">
+            <button class="btn-copy-code" onclick="copyCode(this)">Salin</button>
+            <pre>const res = await fetch('<span class="api-url">http://localhost:3000</span>/send', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'x-api-key': '<span class="api-key">KUNCI_API_ANDA</span>'
+    'x-api-key': '<span class="api-key">API_KEY_ANDA</span>'
   },
   body: JSON.stringify({
     to: '628123456789',
-    message: 'Halo! Pesan terkirim dari Node.js'
+    message: 'Halo dari Node.js'
   })
 });
 const data = await res.json();
 console.log(data);</pre>
+          </div>
         </div>
-      </div>
 
-      <!-- Tab Python -->
-      <div id="doc-python" class="tab-pane">
-        <p style="font-size: 0.85rem; color: var(--text-muted);">Contoh kirim pesan menggunakan Python requests:</p>
-        <div class="code-box">
-          <button class="btn-copy" onclick="copyCode(this)">Salin</button>
-          <pre id="code-python">import requests
+        <!-- Doc: Python -->
+        <div id="doc-sub-python" class="tab-panel" style="display: none;">
+          <div class="code-container">
+            <button class="btn-copy-code" onclick="copyCode(this)">Salin</button>
+            <pre>import requests
 
 url = "<span class="api-url">http://localhost:3000</span>/send"
 headers = {
     "Content-Type": "application/json",
-    "x-api-key": "<span class="api-key">KUNCI_API_ANDA</span>"
+    "x-api-key": "<span class="api-key">API_KEY_ANDA</span>"
 }
 payload = {
     "to": "628123456789",
-    "message": "Halo dari Python!"
+    "message": "Halo dari Python"
 }
 
-response = requests.post(url, json=payload, headers=headers)
-print(response.json())</pre>
+r = requests.post(url, json=payload, headers=headers)
+print(r.json())</pre>
+          </div>
         </div>
-      </div>
 
-      <!-- Tab PHP -->
-      <div id="doc-php" class="tab-pane">
-        <p style="font-size: 0.85rem; color: var(--text-muted);">Contoh kirim pesan menggunakan cURL di PHP:</p>
-        <div class="code-box">
-          <button class="btn-copy" onclick="copyCode(this)">Salin</button>
-          <pre id="code-php">&lt;?php
+        <!-- Doc: PHP -->
+        <div id="doc-sub-php" class="tab-panel" style="display: none;">
+          <div class="code-container">
+            <button class="btn-copy-code" onclick="copyCode(this)">Salin</button>
+            <pre>&lt;?php
 $ch = curl_init('<span class="api-url">http://localhost:3000</span>/send');
 $payload = json_encode([
     'to' => '628123456789',
-    'message' => 'Halo dari PHP!'
+    'message' => 'Halo dari PHP'
 ]);
 
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Content-Type: application/json',
-    'x-api-key: <span class="api-key">KUNCI_API_ANDA</span>'
+curl_setopt_array($ch, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_POST => true,
+    CURLOPT_POSTFIELDS => $payload,
+    CURLOPT_HTTPHEADER => [
+        'Content-Type: application/json',
+        'x-api-key: <span class="api-key">API_KEY_ANDA</span>'
+    ]
 ]);
 
 $response = curl_exec($ch);
 curl_close($ch);
 echo $response;</pre>
+          </div>
         </div>
-      </div>
 
-      <!-- Tab Webhook -->
-      <div id="doc-webhook" class="tab-pane">
-        <p style="font-size: 0.85rem; color: var(--text-muted);">Payload JSON yang akan dikirimkan gateway ke Webhook URL Anda saat ada pesan masuk:</p>
-        <div class="code-box">
-          <button class="btn-copy" onclick="copyCode(this)">Salin</button>
-          <pre>{
+        <!-- Doc: Webhook -->
+        <div id="doc-sub-webhook" class="tab-panel" style="display: none;">
+          <div class="code-container">
+            <button class="btn-copy-code" onclick="copyCode(this)">Salin</button>
+            <pre>{
   "event": "messages.upsert",
   "from": "628123456789@s.whatsapp.net",
   "isGroup": false,
-  "pushName": "Budi Santoso",
-  "message": "nad, tolong proses tiket #1024",
+  "pushName": "User Name",
+  "message": "nad, cek saldo",
   "isCommand": true,
-  "command": "tolong proses tiket #1024",
+  "command": "cek saldo",
   "timestamp": 1725376500
 }</pre>
-        </div>
-        <div class="info-box">
-          <p>• <strong>isGroup</strong>: Bernilai <code>true</code> jika pesan berasal dari Grup WhatsApp, atau <code>false</code> jika chat pribadi.</p>
-          <p>• <strong>isCommand</strong>: Bernilai <code>true</code> jika pesan diawali dengan kata <code>nad,</code>.</p>
-          <p>• <strong>command</strong>: Potongan isi teks setelah kata <code>nad,</code>.</p>
-        </div>
-      </div>
-
-      <!-- Tab Rules -->
-      <div id="doc-rules" class="tab-pane">
-        <div class="info-box" style="display: flex; flex-direction: column; gap: 10px;">
-          <div>
-            <strong style="color: var(--text);">Format Parameter "to":</strong>
-            <p>• <strong>Nomor Personal</strong>: Masukkan nomor dengan kode negara (tanpa simbol + atau spasi). Contoh: <code>628123456789</code>.</p>
-            <p>• <strong>Grup WhatsApp</strong>: Masukkan ID JID lengkap grup WhatsApp yang berakhiran <code>@g.us</code>. Contoh: <code>120363029988776655@g.us</code>.</p>
-          </div>
-          <div>
-            <strong style="color: var(--text);">Prefix Perintah Bot ("nad,"):</strong>
-            <p>Bot mendengarkan setiap pesan. Jika user mengirim pesan berawalan <code>nad,</code> (misal: <em>nad, konfirmasi</em>), bot akan membalas otomatis menandakan perintah diterima.</p>
-          </div>
-          <div>
-            <strong style="color: var(--text);">Keamanan & API Key:</strong>
-            <p>Akses programmatik ke <code>POST /send</code> wajib menyertakan header <code>x-api-key</code> sesuai kunci yang aktif di server.</p>
           </div>
         </div>
       </div>
     </div>
-
   </div>
 
   <script>
@@ -731,10 +1087,14 @@ echo $response;</pre>
 
     const statusBadge = document.getElementById('status-badge');
     const statusText = document.getElementById('status-text');
-    const qrSection = document.getElementById('qr-section');
-    const qrContainer = document.getElementById('qrcode');
-    const qrHint = document.getElementById('qr-hint');
-    const connectedSection = document.getElementById('connected-section');
+    const connectedBanner = document.getElementById('connected-banner');
+    const qrHub = document.getElementById('qr-hub');
+    const qrImage = document.getElementById('qr-image');
+    const qrcodeBox = document.getElementById('qrcode-box');
+    const qrSpinner = document.getElementById('qr-spinner');
+    const refreshQrBtn = document.getElementById('refresh-qr-btn');
+    let qrCodeObj = null;
+
     const sendForm = document.getElementById('send-form');
     const sendBtn = document.getElementById('send-btn');
     const sendResult = document.getElementById('send-result');
@@ -748,10 +1108,9 @@ echo $response;</pre>
     const logsContainer = document.getElementById('logs-container');
     const logCount = document.getElementById('log-count');
 
-    let qrCodeObj = null;
-    let lastQR = null;
     let pollTimer = null;
     let cachedApiKey = '';
+    let lastQR = null;
 
     function getToken() {
       return localStorage.getItem('whatsapi_session_token') || '';
@@ -771,10 +1130,95 @@ echo $response;</pre>
       updateDocApiUrl();
       loadApiKey();
       loadWebhookUrl();
-      loadGroups();
       checkStatus();
       if (!pollTimer) {
         pollTimer = setInterval(checkStatus, 3000);
+      }
+    }
+
+    function showLogin() {
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+      setToken('');
+      authScreen.style.display = 'block';
+      dashboardScreen.style.display = 'none';
+      qrImage.src = '';
+      lastQR = null;
+    }
+
+    // --- Tab Navigation ---
+    function switchMainTab(tabId) {
+      document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+
+      event.currentTarget.classList.add('active');
+      const target = document.getElementById('view-' + tabId);
+      if (target) target.classList.add('active');
+
+      if (tabId === 'messaging') loadGroups();
+      if (tabId === 'activity') loadActivityLogs();
+    }
+
+    function switchDocSub(docId) {
+      document.querySelectorAll('.tab-sub-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#view-docs .tab-panel').forEach(p => p.style.display = 'none');
+
+      event.currentTarget.classList.add('active');
+      const target = document.getElementById('doc-sub-' + docId);
+      if (target) target.style.display = 'block';
+    }
+
+    // --- QR Code & Reconnect ---
+    async function requestReconnect() {
+      const token = getToken();
+      if (refreshQrBtn) {
+        refreshQrBtn.disabled = true;
+        refreshQrBtn.textContent = 'Meminta QR baru...';
+      }
+      qrSpinner.style.display = 'flex';
+      qrSpinner.querySelector('span').textContent = 'Meminta kode QR dari server WhatsApp...';
+      if (qrcodeBox) qrcodeBox.style.display = 'none';
+      if (qrImage) qrImage.style.display = 'none';
+      lastQR = null;
+
+      try {
+        await fetch('/reconnect', {
+          method: 'POST',
+          headers: { 'x-api-key': token }
+        });
+        setTimeout(checkStatus, 1500);
+      } catch (err) {
+        console.error('Reconnect error:', err);
+      } finally {
+        setTimeout(() => {
+          if (refreshQrBtn) {
+            refreshQrBtn.disabled = false;
+            refreshQrBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg> Minta QR Baru';
+          }
+        }, 2000);
+      }
+    }
+
+    // Reset Sesi WhatsApp
+    async function requestResetSession() {
+      if (!confirm('Apakah Anda yakin ingin mereset sesi WhatsApp? File kredensial lama akan dibersihkan dan QR baru akan dibuat dari nol.')) return;
+      const token = getToken();
+      qrSpinner.style.display = 'flex';
+      qrSpinner.querySelector('span').textContent = 'Mereset sesi & meminta QR baru...';
+      if (qrcodeBox) qrcodeBox.style.display = 'none';
+      if (qrImage) qrImage.style.display = 'none';
+      lastQR = null;
+
+      try {
+        await fetch('/reset-session', {
+          method: 'POST',
+          headers: { 'x-api-key': token }
+        });
+        setTimeout(checkStatus, 1500);
+      } catch (err) {
+        alert('Gagal mereset sesi: ' + err.message);
       }
     }
 
@@ -786,16 +1230,14 @@ echo $response;</pre>
         if (!res.ok) return;
         const data = await res.json();
         cachedApiKey = data.apiKey || '';
-        const input = document.getElementById('apikey-input');
-        if (input) input.value = cachedApiKey;
+        document.getElementById('apikey-display').value = cachedApiKey;
         updateDocApiUrl();
       } catch {}
     }
 
-    function toggleApiKey() {
-      const input = document.getElementById('apikey-input');
-      const btn = document.getElementById('apikey-toggle-btn');
-      if (!input || !btn) return;
+    function toggleApiKeyVisibility() {
+      const input = document.getElementById('apikey-display');
+      const btn = document.getElementById('apikey-toggle');
       if (input.type === 'password') {
         input.type = 'text';
         btn.textContent = 'Sembunyikan';
@@ -809,16 +1251,12 @@ echo $response;</pre>
       const msg = document.getElementById('apikey-copy-msg');
       if (!cachedApiKey) return;
       navigator.clipboard.writeText(cachedApiKey).then(() => {
-        if (msg) {
-          msg.className = 'alert success';
-          msg.textContent = 'API Key berhasil disalin ke clipboard!';
-          setTimeout(() => { msg.className = 'alert'; msg.style.display = 'none'; }, 2000);
-        }
+        msg.className = 'alert-box success';
+        msg.textContent = 'API Key tersalin ke clipboard';
+        setTimeout(() => { msg.className = 'alert-box'; msg.style.display = 'none'; }, 2000);
       }).catch(() => {
-        if (msg) {
-          msg.className = 'alert error';
-          msg.textContent = 'Gagal menyalin. Silakan salin manual.';
-        }
+        msg.className = 'alert-box error';
+        msg.textContent = 'Gagal menyalin otomatis';
       });
     }
 
@@ -827,7 +1265,6 @@ echo $response;</pre>
       const token = getToken();
       const container = document.getElementById('groups-container');
       const btn = document.getElementById('refresh-groups-btn');
-      if (!container) return;
       if (btn) {
         btn.disabled = true;
         btn.textContent = 'Memuat...';
@@ -838,30 +1275,31 @@ echo $response;</pre>
         const data = await res.json();
 
         if (!res.ok) {
-          container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 16px;">${escapeHtml(data.error || 'Hubungkan WhatsApp terlebih dahulu.')}</p>`;
+          container.innerHTML = `<p style="color: var(--danger); font-size: 0.78rem; text-align: center; padding: 20px;">${escapeHtml(data.error || 'Gagal memuat grup.')}</p>`;
           return;
         }
 
         const groups = data.groups || [];
         if (groups.length === 0) {
-          container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 16px;">Tidak ada grup ditemukan pada akun ini.</p>';
+          container.innerHTML = '<p style="color: var(--text-dim); font-size: 0.78rem; text-align: center; padding: 20px;">Tidak ada grup ditemukan pada akun ini.</p>';
           return;
         }
 
         container.innerHTML = groups.map(g => `
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; background: #0f172a; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px;">
-            <div style="flex: 1; min-width: 0;">
-              <div style="font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(g.name)}</div>
-              <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace; margin-top: 2px;">${escapeHtml(g.jid)}</div>
+          <div class="group-row">
+            <div class="group-info">
+              <div class="group-name">${escapeHtml(g.name)}</div>
+              <div class="group-jid">${escapeHtml(g.jid)}</div>
             </div>
-            <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
-              <span style="font-size: 0.75rem; color: var(--text-muted);">${g.participantCount} member</span>
-              <button class="btn-secondary" style="font-size: 0.75rem; padding: 4px 8px;" onclick="copyGroupJid('${escapeHtml(g.jid)}', this)">Salin JID</button>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span style="font-size: 0.72rem; color: var(--text-dim); white-space: nowrap;">${g.participantCount} member</span>
+              <button class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.72rem;"
+                onclick="copyGroupJid('${escapeHtml(g.jid)}', this)">Salin JID</button>
             </div>
           </div>
         `).join('');
       } catch (err) {
-        container.innerHTML = `<p style="color: var(--danger); font-size: 0.85rem; text-align: center; padding: 16px;">Error: ${escapeHtml(err.message)}</p>`;
+        container.innerHTML = `<p style="color: var(--danger); font-size: 0.78rem; text-align: center; padding: 20px;">Error: ${escapeHtml(err.message)}</p>`;
       } finally {
         if (btn) {
           btn.disabled = false;
@@ -873,49 +1311,26 @@ echo $response;</pre>
     function copyGroupJid(jid, btn) {
       navigator.clipboard.writeText(jid).then(() => {
         const orig = btn.textContent;
-        btn.textContent = 'Tersalin!';
-        btn.style.background = 'var(--primary)';
-        btn.style.color = '#0f172a';
+        btn.textContent = 'Tersalin';
+        btn.style.color = 'var(--accent)';
         setTimeout(() => {
           btn.textContent = orig;
-          btn.style.background = '';
           btn.style.color = '';
         }, 1800);
       });
     }
 
-    function showLogin() {
-      if (pollTimer) {
-        clearInterval(pollTimer);
-        pollTimer = null;
-      }
-      setToken('');
-      authScreen.style.display = 'block';
-      dashboardScreen.style.display = 'none';
-      qrContainer.innerHTML = '';
-      lastQR = null;
-    }
-
+    // --- Dynamic Doc URLs ---
     function updateDocApiUrl() {
       const currentOrigin = window.location.origin;
       document.querySelectorAll('.api-url').forEach(el => {
         el.textContent = currentOrigin;
       });
-      const keyToUse = cachedApiKey || getToken();
-      if (keyToUse) {
+      if (cachedApiKey) {
         document.querySelectorAll('.api-key').forEach(el => {
-          el.textContent = keyToUse;
+          el.textContent = cachedApiKey;
         });
       }
-    }
-
-    function switchDocTab(tabName) {
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
-
-      event.target.classList.add('active');
-      const activePane = document.getElementById('doc-' + tabName);
-      if (activePane) activePane.classList.add('active');
     }
 
     function copyCode(btn) {
@@ -923,26 +1338,24 @@ echo $response;</pre>
       if (codeBlock) {
         navigator.clipboard.writeText(codeBlock.innerText).then(() => {
           const originalText = btn.textContent;
-          btn.textContent = 'Tersalin!';
-          btn.style.background = 'var(--primary)';
-          btn.style.color = '#0f172a';
+          btn.textContent = 'Tersalin';
+          btn.style.color = 'var(--accent)';
           setTimeout(() => {
             btn.textContent = originalText;
-            btn.style.background = '';
             btn.style.color = '';
-          }, 2000);
+          }, 1800);
         });
       }
     }
 
-    // Login Submission
+    // --- Auth Submissions ---
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const username = document.getElementById('login-username').value.trim();
       const password = document.getElementById('login-password').value;
 
       loginBtn.disabled = true;
-      loginResult.className = 'alert';
+      loginResult.className = 'alert-box';
       loginResult.style.display = 'none';
 
       try {
@@ -957,18 +1370,17 @@ echo $response;</pre>
           setToken(data.token);
           showDashboard();
         } else {
-          loginResult.className = 'alert error';
+          loginResult.className = 'alert-box error';
           loginResult.textContent = data.error || 'Username atau password salah';
         }
       } catch (err) {
-        loginResult.className = 'alert error';
+        loginResult.className = 'alert-box error';
         loginResult.textContent = 'Gagal menghubungi server: ' + err.message;
       } finally {
         loginBtn.disabled = false;
       }
     });
 
-    // Logout
     logoutBtn.addEventListener('click', async () => {
       const token = getToken();
       try {
@@ -980,7 +1392,7 @@ echo $response;</pre>
       showLogin();
     });
 
-    // Check WhatsApp Connection Status & Fetch Logs
+    // --- Status Poller & QR Code Renderer ---
     async function checkStatus() {
       const token = getToken();
       if (!token) {
@@ -1001,64 +1413,55 @@ echo $response;</pre>
         const data = await res.json();
 
         if (data.connected) {
-          statusBadge.className = 'status-badge connected';
-          statusText.textContent = 'Terhubung';
-          qrSection.style.display = 'none';
-          connectedSection.style.display = 'block';
+          statusBadge.className = 'status-indicator connected';
+          statusText.textContent = 'Tersambung';
+          connectedBanner.style.display = 'flex';
+          qrHub.style.display = 'none';
         } else {
-          statusBadge.className = 'status-badge disconnected';
-          statusText.textContent = 'Belum Terhubung';
-          qrSection.style.display = 'block';
-          connectedSection.style.display = 'none';
+          statusBadge.className = 'status-indicator disconnected';
+          statusText.textContent = 'Terputus';
+          connectedBanner.style.display = 'none';
+          qrHub.style.display = 'flex';
 
+          // Render QR Code using local QRCode library (with fallback)
           if (data.qr && data.qr !== lastQR) {
             lastQR = data.qr;
-            qrContainer.innerHTML = '';
-            if (typeof QRCode !== 'undefined') {
-              qrCodeObj = new QRCode(qrContainer, {
-                text: data.qr,
-                width: 200,
-                height: 200,
-                correctLevel: QRCode.CorrectLevel.M
-              });
-            } else {
-              const img = document.createElement('img');
-              img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=8&data=' + encodeURIComponent(data.qr);
-              img.alt = 'QR Code';
-              img.style.width = '200px';
-              img.style.height = '200px';
-              qrContainer.appendChild(img);
+            qrSpinner.style.display = 'none';
+            if (qrImage) qrImage.style.display = 'none';
+            if (qrcodeBox) {
+              qrcodeBox.innerHTML = '';
+              qrcodeBox.style.display = 'flex';
+              if (typeof QRCode !== 'undefined') {
+                qrCodeObj = new QRCode(qrcodeBox, {
+                  text: data.qr,
+                  width: 220,
+                  height: 220,
+                  correctLevel: QRCode.CorrectLevel.M
+                });
+              } else {
+                const img = document.createElement('img');
+                img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=' + encodeURIComponent(data.qr);
+                img.alt = 'WhatsApp QR Code';
+                img.style.width = '220px';
+                img.style.height = '220px';
+                qrcodeBox.appendChild(img);
+              }
             }
-            qrHint.textContent = 'Buka WhatsApp di HP > Perangkat Tertaut > Tautkan Perangkat lalu scan QR ini.';
           } else if (!data.qr) {
-            qrContainer.innerHTML = '';
-            qrHint.textContent = 'Menunggu kode QR dari WhatsApp...';
+            lastQR = null;
+            if (qrcodeBox) qrcodeBox.style.display = 'none';
+            if (qrImage) qrImage.style.display = 'none';
+            qrSpinner.style.display = 'flex';
+            qrSpinner.querySelector('span').textContent = 'Menghubungkan ke server WhatsApp...';
           }
         }
-
-        loadActivityLogs();
       } catch (err) {
-        statusBadge.className = 'status-badge disconnected';
-        statusText.textContent = 'Offline / Gagal Terhubung';
+        statusBadge.className = 'status-indicator disconnected';
+        statusText.textContent = 'Offline';
       }
     }
 
-    // Request Reconnect / Refresh QR
-    async function requestReconnect() {
-      const token = getToken();
-      try {
-        await fetch('/reconnect', {
-          method: 'POST',
-          headers: { 'x-api-key': token }
-        });
-        qrHint.textContent = 'Meminta kode QR baru...';
-        setTimeout(checkStatus, 1500);
-      } catch (err) {
-        console.error('Reconnect error:', err);
-      }
-    }
-
-    // Load Webhook URL
+    // --- Webhook Actions ---
     async function loadWebhookUrl() {
       const token = getToken();
       try {
@@ -1072,14 +1475,13 @@ echo $response;</pre>
       } catch {}
     }
 
-    // Save Webhook URL
     webhookForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const token = getToken();
       const url = webhookUrlInput.value.trim();
 
       saveWebhookBtn.disabled = true;
-      webhookResult.className = 'alert';
+      webhookResult.className = 'alert-box';
       webhookResult.style.display = 'none';
 
       try {
@@ -1094,25 +1496,25 @@ echo $response;</pre>
 
         const data = await res.json();
         if (res.ok) {
-          webhookResult.className = 'alert success';
-          webhookResult.textContent = 'Webhook URL berhasil disimpan!';
+          webhookResult.className = 'alert-box success';
+          webhookResult.textContent = 'Webhook URL berhasil diperbarui';
+          setTimeout(() => { webhookResult.style.display = 'none'; }, 3000);
         } else {
-          webhookResult.className = 'alert error';
+          webhookResult.className = 'alert-box error';
           webhookResult.textContent = 'Gagal menyimpan: ' + (data.error || 'Terjadi kesalahan');
         }
       } catch (err) {
-        webhookResult.className = 'alert error';
+        webhookResult.className = 'alert-box error';
         webhookResult.textContent = 'Error: ' + err.message;
       } finally {
         saveWebhookBtn.disabled = false;
       }
     });
 
-    // Test Webhook Ping
     testWebhookBtn.addEventListener('click', async () => {
       const token = getToken();
       testWebhookBtn.disabled = true;
-      webhookResult.className = 'alert';
+      webhookResult.className = 'alert-box';
       webhookResult.style.display = 'none';
 
       try {
@@ -1122,21 +1524,21 @@ echo $response;</pre>
         });
         const data = await res.json();
         if (data.success) {
-          webhookResult.className = 'alert success';
-          webhookResult.textContent = 'Ping Webhook Berhasil: ' + data.status;
+          webhookResult.className = 'alert-box success';
+          webhookResult.textContent = 'Ping berhasil: ' + data.status;
         } else {
-          webhookResult.className = 'alert error';
-          webhookResult.textContent = 'Ping Webhook Gagal: ' + data.status;
+          webhookResult.className = 'alert-box error';
+          webhookResult.textContent = 'Ping gagal: ' + data.status;
         }
       } catch (err) {
-        webhookResult.className = 'alert error';
-        webhookResult.textContent = 'Gagal menghubungi server: ' + err.message;
+        webhookResult.className = 'alert-box error';
+        webhookResult.textContent = 'Gagal menghubungi webhook: ' + err.message;
       } finally {
         testWebhookBtn.disabled = false;
       }
     });
 
-    // Load Activity Logs
+    // --- Logs Stream ---
     async function loadActivityLogs() {
       const token = getToken();
       try {
@@ -1150,33 +1552,40 @@ echo $response;</pre>
         logCount.textContent = logs.length + ' aktivitas';
 
         if (logs.length === 0) {
-          logsContainer.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 16px;">Belum ada pesan masuk tercatat...</p>';
+          logsContainer.innerHTML = '<p style="color: var(--text-dim); font-size: 0.78rem; text-align: center; padding: 24px;">Belum ada pesan masuk tercatat.</p>';
           return;
         }
 
         logsContainer.innerHTML = logs.map(l => {
-          const timeStr = new Date(l.timestamp).toLocaleTimeString();
-          const isCmdBadge = l.isCommand ? '<span class="badge badge-cmd">NAD, CMD</span>' : '';
-          const groupBadge = l.isGroup ? '<span class="badge badge-group">Grup</span>' : '<span class="badge badge-neutral">Personal</span>';
+          const timeStr = new Date(l.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          const isCmdBadge = l.isCommand ? '<span class="tag tag-cmd">CMD</span>' : '';
+          const groupBadge = l.isGroup ? '<span class="tag tag-group">Grup</span>' : '<span class="tag tag-muted">Personal</span>';
           
-          let whBadge = '<span class="badge badge-neutral">No Webhook</span>';
+          let whBadge = '<span class="tag tag-muted">No Webhook</span>';
           if (l.webhookStatus) {
             if (l.webhookStatus.startsWith('200') || l.webhookStatus.startsWith('201') || l.webhookStatus.startsWith('204')) {
-              whBadge = `<span class="badge badge-ok">WH: ${l.webhookStatus}</span>`;
+              whBadge = `<span class="tag tag-ok">${l.webhookStatus}</span>`;
             } else if (l.webhookStatus !== 'No Webhook configured') {
-              whBadge = `<span class="badge badge-err">WH: ${l.webhookStatus}</span>`;
+              whBadge = `<span class="tag tag-err">${l.webhookStatus}</span>`;
             }
           }
 
           const senderName = l.pushName ? `${l.pushName} (${l.from})` : l.from;
 
           return `
-            <div class="log-item">
-              <div class="log-header">
-                <span class="log-sender">${escapeHtml(senderName)} ${groupBadge} ${isCmdBadge}</span>
-                <span class="log-time">${timeStr} | ${whBadge}</span>
+            <div class="log-row">
+              <div class="log-meta">
+                <div class="log-source">
+                  <span>${escapeHtml(senderName)}</span>
+                  ${groupBadge}
+                  ${isCmdBadge}
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  ${whBadge}
+                  <span class="log-time">${timeStr}</span>
+                </div>
               </div>
-              <div class="log-msg">${escapeHtml(l.message || '')}</div>
+              <div class="log-body">${escapeHtml(l.message || '')}</div>
             </div>
           `;
         }).join('');
@@ -1191,7 +1600,7 @@ echo $response;</pre>
         .replace(/"/g, '&quot;');
     }
 
-    // Handle Send Message
+    // --- Message Sending ---
     sendForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const to = document.getElementById('recipient').value.trim();
@@ -1199,7 +1608,7 @@ echo $response;</pre>
       const token = getToken();
 
       sendBtn.disabled = true;
-      sendResult.className = 'alert';
+      sendResult.className = 'alert-box';
       sendResult.style.display = 'none';
 
       try {
@@ -1214,22 +1623,23 @@ echo $response;</pre>
 
         const data = await res.json();
         if (res.ok) {
-          sendResult.className = 'alert success';
-          sendResult.textContent = 'Pesan berhasil dikirim ke ' + data.to;
+          sendResult.className = 'alert-box success';
+          sendResult.textContent = 'Pesan terkirim ke ' + data.to;
           document.getElementById('message').value = '';
+          setTimeout(() => { sendResult.style.display = 'none'; }, 3000);
         } else {
-          sendResult.className = 'alert error';
+          sendResult.className = 'alert-box error';
           sendResult.textContent = 'Gagal: ' + (data.error || 'Terjadi kesalahan');
         }
       } catch (err) {
-        sendResult.className = 'alert error';
+        sendResult.className = 'alert-box error';
         sendResult.textContent = 'Gagal menghubungi server: ' + err.message;
       } finally {
         sendBtn.disabled = false;
       }
     });
 
-    // Check startup
+    // Boot
     if (getToken()) {
       showDashboard();
     } else {
