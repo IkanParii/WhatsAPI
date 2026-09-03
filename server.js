@@ -4,11 +4,13 @@ import qrcode from 'qrcode-terminal';
 import pino from 'pino';
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '100kb' }));
+app.use(express.static('public'));
 const PORT = process.env.PORT || 3000;
 
 let sock;
 let isConnected = false;
+let currentQR = null;
 
 async function connectToWhatsApp () {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
@@ -23,6 +25,7 @@ async function connectToWhatsApp () {
     sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect, qr } = update;
         if(qr) {
+            currentQR = qr;
             console.log('\nScan the QR code below to connect WhatsApp:');
             qrcode.generate(qr, {small: true});
         }
@@ -32,9 +35,12 @@ async function connectToWhatsApp () {
             console.log('Connection closed due to', lastDisconnect?.error, ', reconnecting:', shouldReconnect);
             if(shouldReconnect) {
                 connectToWhatsApp();
+            } else {
+                currentQR = null;
             }
         } else if(connection === 'open') {
             isConnected = true;
+            currentQR = null;
             console.log('WhatsApp connection opened successfully!');
         }
     });
@@ -67,21 +73,52 @@ async function connectToWhatsApp () {
     });
 }
 
+const API_KEY = process.env.API_KEY || '';
+
+function requireAuth(req, res, next) {
+    if (!API_KEY) return next();
+    const token = req.headers['x-api-key'] || req.query.api_key;
+    if (!token || token !== API_KEY) {
+        return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key' });
+    }
+    next();
+}
+
 app.get('/status', (req, res) => {
-    res.json({ connected: isConnected });
+    // If API_KEY is set, only reveal QR code if auth succeeds
+    if (API_KEY) {
+        const token = req.headers['x-api-key'] || req.query.api_key;
+        if (token !== API_KEY) {
+            return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key', requiresAuth: true });
+        }
+    }
+    res.json({ 
+        connected: isConnected, 
+        qr: currentQR,
+        requiresAuth: Boolean(API_KEY)
+    });
 });
 
-app.post('/send', async (req, res) => {
+app.post('/send', requireAuth, async (req, res) => {
     try {
         const { to, message } = req.body;
-        if (!to || !message) {
-            return res.status(400).json({ error: 'Missing "to" or "message"' });
+        if (!to || typeof to !== 'string' || !message || typeof message !== 'string') {
+            return res.status(400).json({ error: 'Missing or invalid "to" or "message" (must be non-empty strings)' });
         }
+
+        if (message.length > 4096) {
+            return res.status(400).json({ error: 'Message exceeds maximum limit of 4096 characters' });
+        }
+
         if (!sock || !isConnected) {
             return res.status(503).json({ error: 'WhatsApp not connected yet. Please scan the QR code first.' });
         }
 
-        const cleanTo = String(to).replace(/[^0-9@.a-z_]/gi, '');
+        const cleanTo = to.trim().replace(/[^0-9@.a-z_]/gi, '');
+        if (cleanTo.length < 5) {
+            return res.status(400).json({ error: 'Invalid destination phone number or JID' });
+        }
+
         const jid = cleanTo.includes('@') ? cleanTo : `${cleanTo}@s.whatsapp.net`;
         
         await sock.sendMessage(jid, { text: message });
@@ -94,5 +131,12 @@ app.post('/send', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+    if (!API_KEY) {
+        console.warn('\n[SECURITY WARNING] API_KEY environment variable is NOT set!');
+        console.warn('The API and Web GUI are publicly accessible without authentication.');
+        console.warn('Set API_KEY in your environment or .env to secure your service.\n');
+    } else {
+        console.log('[SECURITY] API_KEY authentication is ENABLED.');
+    }
     connectToWhatsApp();
 });
