@@ -1,10 +1,15 @@
 import express from 'express';
 import { makeWASocket, useMultiFileAuthState, DisconnectReason } from '@whiskeysockets/baileys';
 import pino from 'pino';
-import QRCode from 'qrcode';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+
+let QRCode = null;
+try {
+    const qrcodeModule = await import('qrcode');
+    QRCode = qrcodeModule.default || qrcodeModule;
+} catch {}
 
 const app = express();
 app.use(express.json({ limit: '100kb' }));
@@ -87,8 +92,7 @@ async function connectToWhatsApp () {
     
     sock = makeWASocket({
         auth: state,
-        logger: pino({ level: 'silent' }),
-        browser: ['WhatsAPI Console', 'Chrome', '1.0.0']
+        logger: pino({ level: 'silent' })
     });
 
     sock.ev.on('creds.update', saveCreds);
@@ -97,10 +101,12 @@ async function connectToWhatsApp () {
         const { connection, lastDisconnect, qr } = update;
         if(qr) {
             currentQR = qr;
-            try {
-                currentQRImage = await QRCode.toDataURL(qr, { margin: 2, width: 280 });
-            } catch (err) {
-                currentQRImage = null;
+            if (QRCode) {
+                try {
+                    currentQRImage = await QRCode.toDataURL(qr, { margin: 2, width: 280 });
+                } catch {
+                    currentQRImage = null;
+                }
             }
             console.log('\n[WhatsApp] QR Code siap di-scan melalui Web Dashboard.');
         }
@@ -115,7 +121,6 @@ async function connectToWhatsApp () {
                 currentQR = null;
                 currentQRImage = null;
             } else {
-                // Selalu coba menghubungkan ulang secara otomatis agar QR selalu segar
                 clearTimeout(reconnectTimer);
                 reconnectTimer = setTimeout(() => {
                     connectToWhatsApp();
@@ -303,6 +308,31 @@ app.post('/reconnect', requireAuth, async (req, res) => {
         res.json({ success: true, message: 'Menghubungkan ulang sesi WhatsApp...' });
     } catch (err) {
         res.status(500).json({ error: 'Gagal reconnect: ' + err.message });
+    }
+});
+
+app.post('/reset-session', requireAuth, async (req, res) => {
+    try {
+        currentQR = null;
+        currentQRImage = null;
+        isConnected = false;
+        clearTimeout(reconnectTimer);
+        if (sock) {
+            try { sock.ev.removeAllListeners(); sock.end(undefined); } catch {}
+        }
+        const dir = 'auth_info_baileys';
+        if (fs.existsSync(dir)) {
+            const files = fs.readdirSync(dir);
+            for (const file of files) {
+                if (file !== 'api_key.txt' && file !== 'admin_cred.json' && file !== 'webhook_url.txt') {
+                    try { fs.rmSync(path.join(dir, file), { recursive: true, force: true }); } catch {}
+                }
+            }
+        }
+        connectToWhatsApp();
+        res.json({ success: true, message: 'Sesi direset. Kode QR baru sedang disiapkan.' });
+    } catch (err) {
+        res.status(500).json({ error: 'Gagal reset sesi: ' + err.message });
     }
 });
 

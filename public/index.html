@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>WhatsAPI - Gateway Console</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     :root {
       --bg: #09090b;
@@ -17,10 +18,8 @@
       --text-dim: #71717a;
       --accent: #10b981;
       --accent-muted: rgba(16, 185, 129, 0.12);
-      --accent-hover: #059669;
       --danger: #f43f5e;
       --danger-muted: rgba(244, 63, 94, 0.12);
-      --warning: #f59e0b;
       --code-bg: #0d0d10;
       --radius: 8px;
     }
@@ -44,14 +43,14 @@
 
     .app-shell {
       width: 100%;
-      max-width: 1000px;
+      max-width: 1020px;
       display: flex;
       flex-direction: column;
       gap: 16px;
       padding: 0 16px;
     }
 
-    /* Header */
+    /* Top Bar */
     header.top-bar {
       display: flex;
       align-items: center;
@@ -202,56 +201,6 @@
       margin-bottom: 14px;
     }
 
-    /* Navigation Tabs */
-    .nav-tabs {
-      display: flex;
-      gap: 4px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 2px;
-      overflow-x: auto;
-    }
-
-    .nav-tab {
-      background: transparent;
-      border: none;
-      color: var(--text-dim);
-      padding: 8px 14px;
-      font-size: 0.82rem;
-      font-weight: 500;
-      cursor: pointer;
-      border-radius: 6px 6px 0 0;
-      border-bottom: 2px solid transparent;
-      transition: all 0.15s ease;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-    }
-
-    .nav-tab:hover {
-      color: var(--text-muted);
-    }
-
-    .nav-tab.active {
-      color: var(--text);
-      border-bottom-color: var(--text);
-      background: rgba(255, 255, 255, 0.02);
-    }
-
-    .view-section {
-      display: none;
-      animation: fadeIn 0.15s ease;
-    }
-
-    .view-section.active {
-      display: block;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(2px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
     /* Grid */
     .grid-2col {
       display: grid;
@@ -265,7 +214,7 @@
       }
     }
 
-    /* Forms & Inputs */
+    /* Fields */
     .field {
       display: flex;
       flex-direction: column;
@@ -371,47 +320,56 @@
       color: #fb7185;
     }
 
-    /* QR Scan Hub (Centered & Prominent) */
-    .qr-hub {
+    /* WhatsApp QR Scan Section */
+    .qr-layout {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      padding: 10px 0;
+    }
+
+    @media (max-width: 680px) {
+      .qr-layout {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+
+    .qr-container-box {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 36px 20px;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      gap: 20px;
+      gap: 12px;
+      flex-shrink: 0;
     }
 
-    .qr-frame {
+    #qrcode-display {
       background: #ffffff;
       padding: 14px;
-      border-radius: 12px;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
-      width: 260px;
-      height: 260px;
+      border-radius: 10px;
+      width: 220px;
+      height: 220px;
       display: flex;
       align-items: center;
       justify-content: center;
-      position: relative;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     }
 
-    .qr-frame img {
-      width: 100%;
-      height: 100%;
+    #qrcode-display img, #qrcode-display canvas {
+      max-width: 100%;
+      max-height: 100%;
       display: block;
-      image-rendering: pixelated;
     }
 
     .qr-spinner {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       color: #71717a;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       text-align: center;
+      padding: 20px;
     }
 
     .spinner {
@@ -427,30 +385,30 @@
       to { transform: rotate(360deg); }
     }
 
-    .qr-steps {
+    .qr-instructions {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      max-width: 440px;
-      font-size: 0.82rem;
+      gap: 10px;
+      font-size: 0.84rem;
       color: var(--text-muted);
       line-height: 1.5;
     }
 
-    .qr-step-item {
+    .qr-step-row {
       display: flex;
       align-items: flex-start;
       gap: 10px;
     }
 
-    .qr-step-num {
-      width: 20px;
-      height: 20px;
+    .qr-num {
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       background: var(--card-elevated);
       border: 1px solid var(--border);
       color: var(--text);
-      font-size: 0.72rem;
+      font-size: 0.75rem;
+      font-weight: 600;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -458,24 +416,24 @@
       margin-top: 1px;
     }
 
-    /* Connected State Card */
+    /* Connected State */
     .connected-banner {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 14px;
-      padding: 16px 20px;
+      padding: 14px 18px;
       background: var(--accent-muted);
       border: 1px solid rgba(16, 185, 129, 0.3);
       border-radius: var(--radius);
     }
 
-    /* Activity Rows */
+    /* Activity Stream */
     .log-stream {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      max-height: 380px;
+      max-height: 320px;
       overflow-y: auto;
     }
 
@@ -486,7 +444,7 @@
       background: var(--card-elevated);
       border: 1px solid var(--border-subtle);
       border-radius: 6px;
-      padding: 11px 14px;
+      padding: 10px 14px;
       font-size: 0.8rem;
     }
 
@@ -556,12 +514,12 @@
       line-height: 1.4;
     }
 
-    /* Group Rows */
+    /* Groups */
     .group-stream {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      max-height: 320px;
+      max-height: 270px;
       overflow-y: auto;
     }
 
@@ -597,8 +555,8 @@
       margin-top: 1px;
     }
 
-    /* Code Snippets */
-    .tabs-sub {
+    /* Tabs Documentation */
+    .tabs-doc {
       display: flex;
       gap: 2px;
       border-bottom: 1px solid var(--border);
@@ -606,12 +564,12 @@
       overflow-x: auto;
     }
 
-    .tab-sub-item {
+    .tab-doc-btn {
       background: transparent;
       border: none;
       color: var(--text-dim);
-      padding: 6px 12px;
-      font-size: 0.78rem;
+      padding: 7px 12px;
+      font-size: 0.8rem;
       font-weight: 500;
       cursor: pointer;
       border-bottom: 2px solid transparent;
@@ -619,7 +577,7 @@
       white-space: nowrap;
     }
 
-    .tab-sub-item.active {
+    .tab-doc-btn.active {
       color: var(--text);
       border-bottom-color: var(--text);
     }
@@ -663,7 +621,6 @@
       border-color: var(--border-focus);
     }
 
-    /* Auth View */
     #auth-screen {
       max-width: 360px;
       margin: 100px auto 0;
@@ -673,7 +630,7 @@
 </head>
 <body>
 
-  <!-- AUTH SCREEN -->
+  <!-- LOGIN VIEW -->
   <div class="app-shell" id="auth-screen">
     <div class="card" style="padding: 26px;">
       <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
@@ -683,7 +640,7 @@
         <span style="font-weight: 600; font-size: 0.95rem; letter-spacing: -0.01em;">WhatsAPI Gateway</span>
       </div>
       <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 22px;">
-        Masuk untuk mengelola sesi WhatsApp dan integrasi Webhook.
+        Masuk untuk mengelola gateway WhatsApp dan Webhook.
       </p>
 
       <form id="login-form">
@@ -703,7 +660,7 @@
     </div>
   </div>
 
-  <!-- DASHBOARD CONSOLE -->
+  <!-- MAIN CONSOLE VIEW (SINGLE PAGE DASHBOARD) -->
   <div class="app-shell" id="dashboard-screen" style="display: none;">
     <!-- Header -->
     <header class="top-bar">
@@ -728,150 +685,81 @@
       </div>
     </header>
 
-    <!-- Top Navigation Tabs -->
-    <nav class="nav-tabs">
-      <button class="nav-tab active" onclick="switchMainTab('connection')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
-        Sesi WhatsApp
-      </button>
-      <button class="nav-tab" onclick="switchMainTab('messaging')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        Kirim & Grup
-      </button>
-      <button class="nav-tab" onclick="switchMainTab('integration')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
-        Integrasi & Webhook
-      </button>
-      <button class="nav-tab" onclick="switchMainTab('activity')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        Log Aktivitas
-      </button>
-      <button class="nav-tab" onclick="switchMainTab('docs')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-        Dokumentasi API
-      </button>
-    </nav>
+    <!-- SECTION 1: WHATSAPP CONNECTION & QR CODE -->
+    <div class="card" id="connection-card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+          Status Koneksi WhatsApp
+        </div>
+      </div>
 
-    <!-- TAB 1: CONNECTION (QR CODE SCAN / STATUS) -->
-    <div id="view-connection" class="view-section active">
-      <!-- Connected Banner -->
+      <!-- Connected State Banner -->
       <div id="connected-banner" class="connected-banner" style="display: none;">
         <div style="display: flex; align-items: center; gap: 12px;">
           <span class="status-dot" style="background: var(--accent); width: 8px; height: 8px; box-shadow: 0 0 8px var(--accent);"></span>
           <div>
             <div style="font-weight: 600; font-size: 0.9rem; color: #34d399;">WhatsApp Terhubung & Siap Digunakan</div>
             <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 2px;">
-              Gateway online. Pesan masuk otomatis di-forward ke Webhook dan siap mengirim pesan via API.
+              Gateway Baileys aktif. Pesan masuk otomatis di-forward ke Webhook URL dan siap kirim pesan.
             </div>
           </div>
         </div>
-        <button class="btn btn-secondary" onclick="requestReconnect()" title="Reset dan scan ulang nomor lain">
-          Hubungkan Ulang
+        <button class="btn btn-secondary" onclick="requestResetSession()" title="Logout sesi dari gateway dan buat QR baru">
+          Putuskan / Ganti Sesi
         </button>
       </div>
 
-      <!-- Disconnected QR Hub -->
-      <div id="qr-hub" class="qr-hub">
-        <div style="text-align: center; max-width: 480px;">
-          <div style="font-weight: 600; font-size: 1.1rem; letter-spacing: -0.01em; margin-bottom: 6px;">
-            Hubungkan WhatsApp
-          </div>
-          <div style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.4;">
-            Pindai kode QR menggunakan akun WhatsApp ponsel Anda untuk mengaktifkan gateway.
-          </div>
-        </div>
+      <!-- Disconnected State: QR Container -->
+      <div id="qr-section">
+        <div class="qr-layout">
+          <div class="qr-container-box">
+            <div id="qrcode-display">
+              <div id="qr-spinner" class="qr-spinner">
+                <div class="spinner"></div>
+                <span>Menghubungkan ke WhatsApp...</span>
+              </div>
+            </div>
 
-        <div class="qr-frame">
-          <img id="qr-image" src="" alt="WhatsApp QR Code" style="display: none;" />
-          <div id="qr-spinner" class="qr-spinner">
-            <div class="spinner"></div>
-            <span>Menghubungkan ke server WhatsApp...</span>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;">
+              <button id="refresh-qr-btn" class="btn btn-secondary" style="font-size: 0.75rem; padding: 5px 10px;" onclick="requestReconnect()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+                Minta QR Baru
+              </button>
+              <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 5px 10px;" onclick="requestResetSession()" title="Hapus sesi lama dan mulai dari awal">
+                Reset Sesi
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div style="display: flex; gap: 8px; align-items: center;">
-          <button id="refresh-qr-btn" class="btn btn-secondary" onclick="requestReconnect()">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
-            Minta QR Baru
-          </button>
-          <span id="qr-countdown" style="font-size: 0.75rem; color: var(--text-dim); font-family: ui-monospace, monospace;"></span>
-        </div>
-
-        <div class="qr-steps">
-          <div class="qr-step-item">
-            <span class="qr-step-num">1</span>
-            <span>Buka WhatsApp di ponsel Anda.</span>
-          </div>
-          <div class="qr-step-item">
-            <span class="qr-step-num">2</span>
-            <span>Buka <strong>Menu (tiga titik)</strong> atau <strong>Pengaturan</strong> &rarr; <strong>Perangkat Tertaut</strong>.</span>
-          </div>
-          <div class="qr-step-item">
-            <span class="qr-step-num">3</span>
-            <span>Ketuk <strong>Tautkan Perangkat</strong> lalu arahkan kamera ke kode QR di atas.</span>
+          <div class="qr-instructions">
+            <div style="font-weight: 600; font-size: 0.95rem; color: var(--text); margin-bottom: 2px;">
+              Pindai Kode QR untuk Menghubungkan
+            </div>
+            <div class="qr-step-row">
+              <span class="qr-num">1</span>
+              <span>Buka aplikasi WhatsApp di ponsel Anda.</span>
+            </div>
+            <div class="qr-step-row">
+              <span class="qr-num">2</span>
+              <span>Buka <strong>Menu (tiga titik)</strong> atau <strong>Pengaturan</strong> &rarr; pilih <strong>Perangkat Tertaut</strong>.</span>
+            </div>
+            <div class="qr-step-row">
+              <span class="qr-num">3</span>
+              <span>Ketuk <strong>Tautkan Perangkat</strong>, lalu arahkan kamera ke kode QR di samping.</span>
+            </div>
+            <div style="font-size: 0.76rem; color: var(--text-dim); margin-top: 4px;">
+              Kode QR otomatis diperbarui jika kedaluwarsa. Gunakan tombol <em>Minta QR Baru</em> atau <em>Reset Sesi</em> jika QR tidak berganti.
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- TAB 2: MESSAGING & GROUPS -->
-    <div id="view-messaging" class="view-section">
-      <div class="grid-2col">
-        <!-- Send Message Form -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-              Kirim Pesan Teks
-            </div>
-          </div>
-          <div class="card-subtitle">
-            Kirim pesan langsung ke nomor kontak atau ke grup WhatsApp.
-          </div>
-
-          <form id="send-form">
-            <div class="field">
-              <label class="field-label" for="recipient">Penerima (Nomor HP / JID Grup)</label>
-              <input type="text" id="recipient" placeholder="628123456789 atau 12036302xxxx@g.us" required class="mono-input" />
-            </div>
-            <div class="field">
-              <label class="field-label" for="message">Isi Pesan</label>
-              <textarea id="message" placeholder="Tulis isi pesan yang ingin dikirim..." required></textarea>
-            </div>
-            <button type="submit" id="send-btn" class="btn btn-primary">
-              Kirim Pesan
-            </button>
-            <div id="send-result" class="alert-box"></div>
-          </form>
-        </div>
-
-        <!-- Groups List -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              Daftar Grup WhatsApp
-            </div>
-            <button id="refresh-groups-btn" class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.72rem;" onclick="loadGroups()">
-              Refresh
-            </button>
-          </div>
-          <div class="card-subtitle">
-            Salin ID JID grup untuk digunakan pada parameter tujuan <code>to</code>.
-          </div>
-
-          <div id="groups-container" class="group-stream">
-            <p style="color: var(--text-dim); font-size: 0.78rem; text-align: center; padding: 20px;">
-              Hubungkan WhatsApp terlebih dahulu lalu klik Refresh.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB 3: INTEGRATION & WEBHOOK -->
-    <div id="view-integration" class="view-section">
-      <div class="grid-2col">
+    <!-- SECTION 2: 2-COLUMN MAIN DASHBOARD -->
+    <div class="grid-2col">
+      <!-- Left Column: Credentials & Webhook -->
+      <div style="display: flex; flex-direction: column; gap: 16px;">
         <!-- API Key Card -->
         <div class="card">
           <div class="card-header">
@@ -881,7 +769,7 @@
             </div>
           </div>
           <div class="card-subtitle">
-            Kunci rahasia untuk header <code>x-api-key</code> saat mengakses endpoint API dari luar.
+            Kunci otentikasi wajib pada header <code>x-api-key</code> untuk request HTTP dari luar.
           </div>
 
           <div style="display: flex; gap: 6px;">
@@ -896,16 +784,16 @@
           <div id="apikey-copy-msg" class="alert-box"></div>
         </div>
 
-        <!-- Webhook Card -->
+        <!-- Webhook URL Card -->
         <div class="card">
           <div class="card-header">
             <div class="card-title">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-              Webhook URL (Forwarder)
+              Konfigurasi Webhook URL
             </div>
           </div>
           <div class="card-subtitle">
-            Pesan masuk diteruskan ke URL ini melalui request HTTP POST asinkron.
+            Setiap pesan masuk (personal maupun grup) diteruskan ke endpoint ini via POST.
           </div>
 
           <form id="webhook-form">
@@ -924,67 +812,115 @@
           </form>
         </div>
       </div>
-    </div>
 
-    <!-- TAB 4: LIVE ACTIVITY -->
-    <div id="view-activity" class="view-section">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            Log Pesan Masuk & Aktivitas Webhook
+      <!-- Right Column: Send Test & Groups -->
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <!-- Send Message Form -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              Kirim Pesan WhatsApp
+            </div>
           </div>
-          <span id="log-count" style="font-size: 0.72rem; color: var(--text-dim); font-family: ui-monospace, monospace;">0 aktivitas</span>
+
+          <form id="send-form">
+            <div class="field">
+              <label class="field-label" for="recipient">Penerima (Nomor HP / JID Grup)</label>
+              <input type="text" id="recipient" placeholder="628123456789 atau 12036302xxxx@g.us" required class="mono-input" />
+            </div>
+            <div class="field">
+              <label class="field-label" for="message">Isi Pesan</label>
+              <textarea id="message" placeholder="Tulis isi pesan yang ingin dikirim..." required></textarea>
+            </div>
+            <button type="submit" id="send-btn" class="btn btn-primary">
+              Kirim Pesan
+            </button>
+            <div id="send-result" class="alert-box"></div>
+          </form>
         </div>
 
-        <div id="logs-container" class="log-stream">
-          <p style="color: var(--text-dim); font-size: 0.78rem; text-align: center; padding: 24px;">
-            Belum ada pesan masuk tercatat.
-          </p>
+        <!-- Groups List Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Daftar Grup WhatsApp
+            </div>
+            <button id="refresh-groups-btn" class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.72rem;" onclick="loadGroups()">
+              Refresh
+            </button>
+          </div>
+          <div class="card-subtitle">
+            Grup yang diikuti oleh akun aktif. Salin JID untuk mengirim pesan ke grup.
+          </div>
+
+          <div id="groups-container" class="group-stream">
+            <p style="color: var(--text-dim); font-size: 0.78rem; text-align: center; padding: 20px;">
+              Hubungkan WhatsApp terlebih dahulu lalu klik Refresh.
+            </p>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- TAB 5: DOCUMENTATION -->
-    <div id="view-docs" class="view-section">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-            Panduan & Contoh Integrasi API
-          </div>
+    <!-- SECTION 3: LIVE ACTIVITY LOG -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Log Pesan Masuk & Aktivitas Webhook (Live)
         </div>
-        <div class="card-subtitle">
-          Contoh pemanggilan API <code>POST /send</code> dan spesifikasi format Webhook.
-        </div>
+        <span id="log-count" style="font-size: 0.72rem; color: var(--text-dim); font-family: ui-monospace, monospace;">0 aktivitas</span>
+      </div>
 
-        <div class="tabs-sub">
-          <button class="tab-sub-item active" onclick="switchDocSub('curl')">cURL</button>
-          <button class="tab-sub-item" onclick="switchDocSub('node')">Node.js</button>
-          <button class="tab-sub-item" onclick="switchDocSub('python')">Python</button>
-          <button class="tab-sub-item" onclick="switchDocSub('php')">PHP</button>
-          <button class="tab-sub-item" onclick="switchDocSub('webhook')">Schema Webhook</button>
-        </div>
+      <div id="logs-container" class="log-stream">
+        <p style="color: var(--text-dim); font-size: 0.78rem; text-align: center; padding: 24px;">
+          Belum ada pesan masuk tercatat.
+        </p>
+      </div>
+    </div>
 
-        <!-- Doc: cURL -->
-        <div id="doc-sub-curl" class="tab-panel active">
-          <div class="code-container">
-            <button class="btn-copy-code" onclick="copyCode(this)">Salin</button>
-            <pre>curl -X POST <span class="api-url">http://localhost:3000</span>/send \
+    <!-- SECTION 4: INTERACTIVE API DOCUMENTATION -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Dokumentasi & Contoh Integrasi API
+        </div>
+      </div>
+      <div class="card-subtitle">
+        Contoh pemanggilan endpoint <code>POST /send</code> dan spesifikasi format Webhook payload.
+      </div>
+
+      <div class="tabs-doc">
+        <button class="tab-doc-btn active" onclick="switchDocTab('curl')">cURL</button>
+        <button class="tab-doc-btn" onclick="switchDocTab('node')">Node.js</button>
+        <button class="tab-doc-btn" onclick="switchDocTab('python')">Python</button>
+        <button class="tab-doc-btn" onclick="switchDocTab('php')">PHP</button>
+        <button class="tab-doc-btn" onclick="switchDocTab('webhook')">Schema Webhook</button>
+        <button class="tab-doc-btn" onclick="switchDocTab('notes')">Aturan Format</button>
+      </div>
+
+      <!-- Tab cURL -->
+      <div id="doc-pane-curl" class="tab-pane-doc">
+        <div class="code-container">
+          <button class="btn-copy-code" onclick="copyCode(this)">Salin</button>
+          <pre>curl -X POST <span class="api-url">http://localhost:3000</span>/send \
   -H "Content-Type: application/json" \
   -H "x-api-key: <span class="api-key">API_KEY_ANDA</span>" \
   -d '{
     "to": "628123456789",
     "message": "Halo dari WhatsAPI Gateway"
   }'</pre>
-          </div>
         </div>
+      </div>
 
-        <!-- Doc: Node -->
-        <div id="doc-sub-node" class="tab-panel" style="display: none;">
-          <div class="code-container">
-            <button class="btn-copy-code" onclick="copyCode(this)">Salin</button>
-            <pre>const res = await fetch('<span class="api-url">http://localhost:3000</span>/send', {
+      <!-- Tab Node.js -->
+      <div id="doc-pane-node" class="tab-pane-doc" style="display: none;">
+        <div class="code-container">
+          <button class="btn-copy-code" onclick="copyCode(this)">Salin</button>
+          <pre>const res = await fetch('<span class="api-url">http://localhost:3000</span>/send', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -997,14 +933,14 @@
 });
 const data = await res.json();
 console.log(data);</pre>
-          </div>
         </div>
+      </div>
 
-        <!-- Doc: Python -->
-        <div id="doc-sub-python" class="tab-panel" style="display: none;">
-          <div class="code-container">
-            <button class="btn-copy-code" onclick="copyCode(this)">Salin</button>
-            <pre>import requests
+      <!-- Tab Python -->
+      <div id="doc-pane-python" class="tab-pane-doc" style="display: none;">
+        <div class="code-container">
+          <button class="btn-copy-code" onclick="copyCode(this)">Salin</button>
+          <pre>import requests
 
 url = "<span class="api-url">http://localhost:3000</span>/send"
 headers = {
@@ -1018,14 +954,14 @@ payload = {
 
 r = requests.post(url, json=payload, headers=headers)
 print(r.json())</pre>
-          </div>
         </div>
+      </div>
 
-        <!-- Doc: PHP -->
-        <div id="doc-sub-php" class="tab-panel" style="display: none;">
-          <div class="code-container">
-            <button class="btn-copy-code" onclick="copyCode(this)">Salin</button>
-            <pre>&lt;?php
+      <!-- Tab PHP -->
+      <div id="doc-pane-php" class="tab-pane-doc" style="display: none;">
+        <div class="code-container">
+          <button class="btn-copy-code" onclick="copyCode(this)">Salin</button>
+          <pre>&lt;?php
 $ch = curl_init('<span class="api-url">http://localhost:3000</span>/send');
 $payload = json_encode([
     'to' => '628123456789',
@@ -1045,23 +981,44 @@ curl_setopt_array($ch, [
 $response = curl_exec($ch);
 curl_close($ch);
 echo $response;</pre>
-          </div>
         </div>
+      </div>
 
-        <!-- Doc: Webhook -->
-        <div id="doc-sub-webhook" class="tab-panel" style="display: none;">
-          <div class="code-container">
-            <button class="btn-copy-code" onclick="copyCode(this)">Salin</button>
-            <pre>{
+      <!-- Tab Webhook -->
+      <div id="doc-pane-webhook" class="tab-pane-doc" style="display: none;">
+        <div class="code-container">
+          <button class="btn-copy-code" onclick="copyCode(this)">Salin</button>
+          <pre>{
   "event": "messages.upsert",
   "from": "628123456789@s.whatsapp.net",
   "isGroup": false,
-  "pushName": "User Name",
-  "message": "nad, cek saldo",
+  "pushName": "Budi Santoso",
+  "message": "nad, cek status",
   "isCommand": true,
-  "command": "cek saldo",
+  "command": "cek status",
   "timestamp": 1725376500
 }</pre>
+        </div>
+        <div style="font-size: 0.78rem; color: var(--text-dim); margin-top: 8px; line-height: 1.5;">
+          Payload dikirim asinkron melalui HTTP POST dengan timeout 5 detik. Field <code>isCommand</code> otomatis bernilai true jika pesan berawalan <code>nad,</code>.
+        </div>
+      </div>
+
+      <!-- Tab Notes -->
+      <div id="doc-pane-notes" class="tab-pane-doc" style="display: none;">
+        <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 8px; line-height: 1.5; padding-top: 4px;">
+          <div>
+            <strong style="color: var(--text);">Format Parameter "to":</strong>
+            <p style="color: var(--text-dim); margin-top: 2px;">
+              &bull; Nomor Kontak: kode negara tanpa tanda plus atau spasi, contoh: <code>628123456789</code>.<br />
+              &bull; Grup WhatsApp: ID JID berakhiran <code>@g.us</code>, contoh: <code>120363029988776655@g.us</code>.
+            </p>
+          </div>
+          <div>
+            <strong style="color: var(--text);">Prefix Perintah Bot ("nad,"):</strong>
+            <p style="color: var(--text-dim); margin-top: 2px;">
+              Pesan masuk dengan awalan <code>nad,</code> akan dijawab otomatis oleh bot dan difilter pada webhook dengan flag <code>isCommand: true</code>.
+            </p>
           </div>
         </div>
       </div>
@@ -1079,9 +1036,8 @@ echo $response;</pre>
     const statusBadge = document.getElementById('status-badge');
     const statusText = document.getElementById('status-text');
     const connectedBanner = document.getElementById('connected-banner');
-    const qrHub = document.getElementById('qr-hub');
-    const qrImage = document.getElementById('qr-image');
-    const qrSpinner = document.getElementById('qr-spinner');
+    const qrSection = document.getElementById('qr-section');
+    const qrDisplay = document.getElementById('qrcode-display');
     const refreshQrBtn = document.getElementById('refresh-qr-btn');
 
     const sendForm = document.getElementById('send-form');
@@ -1099,7 +1055,7 @@ echo $response;</pre>
 
     let pollTimer = null;
     let cachedApiKey = '';
-    let lastQR = null;
+    let lastRenderedQR = null;
 
     function getToken() {
       return localStorage.getItem('whatsapi_session_token') || '';
@@ -1119,6 +1075,7 @@ echo $response;</pre>
       updateDocApiUrl();
       loadApiKey();
       loadWebhookUrl();
+      loadGroups();
       checkStatus();
       if (!pollTimer) {
         pollTimer = setInterval(checkStatus, 3000);
@@ -1133,41 +1090,71 @@ echo $response;</pre>
       setToken('');
       authScreen.style.display = 'block';
       dashboardScreen.style.display = 'none';
-      qrImage.src = '';
-      lastQR = null;
+      qrDisplay.innerHTML = '';
+      lastRenderedQR = null;
     }
 
-    // --- Tab Navigation ---
-    function switchMainTab(tabId) {
-      document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+    // --- QR Code Rendering (Triple Fallback) ---
+    function renderQRCode(qrString, qrImageBase64) {
+      if (!qrString && !qrImageBase64) {
+        qrDisplay.innerHTML = `
+          <div class="qr-spinner">
+            <div class="spinner"></div>
+            <span>Menghubungkan ke WhatsApp...</span>
+          </div>
+        `;
+        lastRenderedQR = null;
+        return;
+      }
 
-      event.currentTarget.classList.add('active');
-      const target = document.getElementById('view-' + tabId);
-      if (target) target.classList.add('active');
+      if (lastRenderedQR === qrString) return;
+      lastRenderedQR = qrString;
+      qrDisplay.innerHTML = '';
 
-      if (tabId === 'messaging') loadGroups();
-      if (tabId === 'activity') loadActivityLogs();
+      // Priority 1: Base64 data URL from server (instant, no CDN needed)
+      if (qrImageBase64) {
+        const img = document.createElement('img');
+        img.src = qrImageBase64;
+        img.alt = 'QR Code WhatsApp';
+        qrDisplay.appendChild(img);
+        return;
+      }
+
+      // Priority 2: Client-side qrcodejs library
+      if (typeof QRCode !== 'undefined') {
+        try {
+          new QRCode(qrDisplay, {
+            text: qrString,
+            width: 192,
+            height: 192,
+            correctLevel: QRCode.CorrectLevel.M
+          });
+          return;
+        } catch (e) {
+          console.warn('qrcodejs render error:', e);
+        }
+      }
+
+      // Priority 3: Dynamic Image Fallback
+      const img = document.createElement('img');
+      img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=8&data=' + encodeURIComponent(qrString);
+      img.alt = 'QR Code WhatsApp';
+      qrDisplay.appendChild(img);
     }
 
-    function switchDocSub(docId) {
-      document.querySelectorAll('.tab-sub-item').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('#view-docs .tab-panel').forEach(p => p.style.display = 'none');
-
-      event.currentTarget.classList.add('active');
-      const target = document.getElementById('doc-sub-' + docId);
-      if (target) target.style.display = 'block';
-    }
-
-    // --- QR Code & Reconnect ---
+    // --- Reconnect & Reset Sesi ---
     async function requestReconnect() {
       const token = getToken();
       if (refreshQrBtn) {
         refreshQrBtn.disabled = true;
-        refreshQrBtn.textContent = 'Meminta QR baru...';
+        refreshQrBtn.textContent = 'Meminta...';
       }
-      qrSpinner.style.display = 'flex';
-      qrImage.style.display = 'none';
+      qrDisplay.innerHTML = `
+        <div class="qr-spinner">
+          <div class="spinner"></div>
+          <span>Menghubungkan ulang...</span>
+        </div>
+      `;
 
       try {
         await fetch('/reconnect', {
@@ -1176,18 +1163,39 @@ echo $response;</pre>
         });
         setTimeout(checkStatus, 1500);
       } catch (err) {
-        console.error('Reconnect error:', err);
+        console.error('Reconnect err:', err);
       } finally {
         setTimeout(() => {
           if (refreshQrBtn) {
             refreshQrBtn.disabled = false;
-            refreshQrBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg> Minta QR Baru';
+            refreshQrBtn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg> Minta QR Baru';
           }
         }, 2000);
       }
     }
 
-    // --- API Key Management ---
+    async function requestResetSession() {
+      if (!confirm('Apakah Anda yakin ingin mereset sesi WhatsApp? Sesi sebelumnya akan dihapus dan kode QR baru akan disiapkan.')) return;
+      const token = getToken();
+      qrDisplay.innerHTML = `
+        <div class="qr-spinner">
+          <div class="spinner"></div>
+          <span>Mereset sesi...</span>
+        </div>
+      `;
+
+      try {
+        await fetch('/reset-session', {
+          method: 'POST',
+          headers: { 'x-api-key': token }
+        });
+        setTimeout(checkStatus, 1500);
+      } catch (err) {
+        alert('Gagal mereset sesi: ' + err.message);
+      }
+    }
+
+    // --- API Key ---
     async function loadApiKey() {
       const token = getToken();
       try {
@@ -1240,7 +1248,7 @@ echo $response;</pre>
         const data = await res.json();
 
         if (!res.ok) {
-          container.innerHTML = `<p style="color: var(--danger); font-size: 0.78rem; text-align: center; padding: 20px;">${escapeHtml(data.error || 'Gagal memuat grup.')}</p>`;
+          container.innerHTML = `<p style="color: var(--text-dim); font-size: 0.78rem; text-align: center; padding: 20px;">${escapeHtml(data.error || 'Hubungkan WhatsApp terlebih dahulu.')}</p>`;
           return;
         }
 
@@ -1296,6 +1304,15 @@ echo $response;</pre>
           el.textContent = cachedApiKey;
         });
       }
+    }
+
+    function switchDocTab(tabId) {
+      document.querySelectorAll('.tab-doc-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane-doc').forEach(p => p.style.display = 'none');
+
+      event.currentTarget.classList.add('active');
+      const target = document.getElementById('doc-pane-' + tabId);
+      if (target) target.style.display = 'block';
     }
 
     function copyCode(btn) {
@@ -1357,7 +1374,7 @@ echo $response;</pre>
       showLogin();
     });
 
-    // --- Status Poller & QR Code Renderer ---
+    // --- Status Poller ---
     async function checkStatus() {
       const token = getToken();
       if (!token) {
@@ -1381,27 +1398,16 @@ echo $response;</pre>
           statusBadge.className = 'status-indicator connected';
           statusText.textContent = 'Tersambung';
           connectedBanner.style.display = 'flex';
-          qrHub.style.display = 'none';
+          qrSection.style.display = 'none';
         } else {
           statusBadge.className = 'status-indicator disconnected';
           statusText.textContent = 'Terputus';
           connectedBanner.style.display = 'none';
-          qrHub.style.display = 'flex';
-
-          // Render QR Code (Priority 1: Base64 data URL from server; Priority 2: dynamic generator fallback)
-          if (data.qrImage) {
-            qrImage.src = data.qrImage;
-            qrImage.style.display = 'block';
-            qrSpinner.style.display = 'none';
-          } else if (data.qr) {
-            qrImage.src = 'https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=' + encodeURIComponent(data.qr);
-            qrImage.style.display = 'block';
-            qrSpinner.style.display = 'none';
-          } else {
-            qrImage.style.display = 'none';
-            qrSpinner.style.display = 'flex';
-          }
+          qrSection.style.display = 'block';
+          renderQRCode(data.qr, data.qrImage);
         }
+
+        loadActivityLogs();
       } catch (err) {
         statusBadge.className = 'status-indicator disconnected';
         statusText.textContent = 'Offline';
