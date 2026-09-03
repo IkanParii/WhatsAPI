@@ -4,11 +4,11 @@ services:
     container_name: whatsapi
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "${PORT:-3000}:${PORT:-3000}"
     volumes:
       - ./auth_info_baileys:/app/auth_info_baileys
     environment:
-      - PORT=3000
+      - PORT=${PORT:-3000}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
       - API_KEY=${API_KEY:-}
       - WEBHOOK_URL=${WEBHOOK_URL:-}
