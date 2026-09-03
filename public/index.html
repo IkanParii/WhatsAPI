@@ -752,6 +752,11 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         Log Aktivitas
       </button>
+      <button class="nav-tab" onclick="switchMainTab('errors')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Log Error
+        <span id="error-badge-count" style="display:none; background: var(--danger); color: #fff; font-size: 0.65rem; padding: 1px 5px; border-radius: 10px; margin-left: 2px;">0</span>
+      </button>
       <button class="nav-tab" onclick="switchMainTab('docs')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
         Dokumentasi API
@@ -954,7 +959,36 @@
       </div>
     </div>
 
-    <!-- TAB 5: DOCUMENTATION -->
+    <!-- TAB 5: ERROR LOGS -->
+    <div id="view-errors" class="view-section">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Log Error Sistem &amp; Pengiriman
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button id="refresh-errors-btn" class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.72rem;" onclick="loadErrorLogs()">
+              Refresh
+            </button>
+            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.72rem; color: #fb7185;" onclick="clearErrorLogs()">
+              Bersihkan
+            </button>
+          </div>
+        </div>
+        <div class="card-subtitle">
+          Mencatat riwayat kegagalan kirim pesan WhatsApp, error webhook forwarder, dan pemutusan koneksi Baileys.
+        </div>
+
+        <div id="error-logs-container" class="log-stream">
+          <p style="color: var(--text-dim); font-size: 0.78rem; text-align: center; padding: 20px;">
+            Tidak ada error yang tercatat. Sistem berjalan normal.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: DOCUMENTATION -->
     <div id="view-docs" class="view-section">
       <div class="card">
         <div class="card-header">
@@ -1131,6 +1165,7 @@ echo $response;</pre>
       loadApiKey();
       loadWebhookUrl();
       checkStatus();
+      loadErrorLogs();
       if (!pollTimer) {
         pollTimer = setInterval(checkStatus, 3000);
       }
@@ -1159,6 +1194,7 @@ echo $response;</pre>
 
       if (tabId === 'messaging') loadGroups();
       if (tabId === 'activity') loadActivityLogs();
+      if (tabId === 'errors') loadErrorLogs();
     }
 
     function switchDocSub(docId) {
@@ -1291,10 +1327,12 @@ echo $response;</pre>
               <div class="group-name">${escapeHtml(g.name)}</div>
               <div class="group-jid">${escapeHtml(g.jid)}</div>
             </div>
-            <div style="display: flex; gap: 8px; align-items: center;">
+            <div style="display: flex; gap: 6px; align-items: center;">
               <span style="font-size: 0.72rem; color: var(--text-dim); white-space: nowrap;">${g.participantCount} member</span>
+              <button class="btn btn-primary" style="padding: 3px 8px; font-size: 0.72rem;"
+                onclick="useRecipient('${escapeHtml(g.jid)}')">Gunakan</button>
               <button class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.72rem;"
-                onclick="copyGroupJid('${escapeHtml(g.jid)}', this)">Salin JID</button>
+                onclick="copyGroupJid('${escapeHtml(g.jid)}', this)">Salin</button>
             </div>
           </div>
         `).join('');
@@ -1305,6 +1343,18 @@ echo $response;</pre>
           btn.disabled = false;
           btn.textContent = 'Refresh';
         }
+      }
+    }
+
+    function useRecipient(jid) {
+      const recipientInput = document.getElementById('recipient');
+      const messageInput = document.getElementById('message');
+      if (recipientInput) {
+        recipientInput.value = jid;
+        recipientInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      if (messageInput) {
+        messageInput.focus();
       }
     }
 
@@ -1592,6 +1642,65 @@ echo $response;</pre>
       } catch {}
     }
 
+    // --- Error Logs ---
+    async function loadErrorLogs() {
+      const token = getToken();
+      const container = document.getElementById('error-logs-container');
+      const badge = document.getElementById('error-badge-count');
+      if (!container) return;
+
+      try {
+        const res = await fetch('/error-logs', { headers: { 'x-api-key': token } });
+        if (!res.ok) return;
+        const data = await res.json();
+        const errors = data.errors || [];
+
+        if (badge) {
+          if (errors.length > 0) {
+            badge.style.display = 'inline-block';
+            badge.textContent = errors.length;
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+
+        if (errors.length === 0) {
+          container.innerHTML = '<p style="color: var(--text-dim); font-size: 0.78rem; text-align: center; padding: 20px;">Tidak ada error yang tercatat. Sistem berjalan normal.</p>';
+          return;
+        }
+
+        container.innerHTML = errors.map(err => {
+          const timeStr = new Date(err.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          const typeTag = `<span class="tag tag-err">${escapeHtml(err.type.toUpperCase())}</span>`;
+          return `
+            <div class="log-row">
+              <div class="log-meta">
+                <div class="log-source">
+                  ${typeTag}
+                  <span style="color: #fb7185; font-weight: 500;">${escapeHtml(err.message)}</span>
+                </div>
+                <span class="log-time">${timeStr}</span>
+              </div>
+              ${err.details ? `<pre class="code-preview" style="margin-top: 6px; font-size: 0.72rem; color: var(--text-muted); background: #000; border: 1px solid var(--border); padding: 6px 8px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; font-family: ui-monospace, monospace;">${escapeHtml(err.details)}</pre>` : ''}
+            </div>
+          `;
+        }).join('');
+      } catch (e) {
+        console.error('Failed to load error logs:', e);
+      }
+    }
+
+    async function clearErrorLogs() {
+      if (!confirm('Apakah Anda yakin ingin membersihkan seluruh log error?')) return;
+      const token = getToken();
+      try {
+        await fetch('/error-logs/clear', { method: 'POST', headers: { 'x-api-key': token } });
+        loadErrorLogs();
+      } catch (e) {
+        alert('Gagal membersihkan log error: ' + e.message);
+      }
+    }
+
     function escapeHtml(str) {
       return String(str)
         .replace(/&/g, '&amp;')
@@ -1630,10 +1739,12 @@ echo $response;</pre>
         } else {
           sendResult.className = 'alert-box error';
           sendResult.textContent = 'Gagal: ' + (data.error || 'Terjadi kesalahan');
+          loadErrorLogs();
         }
       } catch (err) {
         sendResult.className = 'alert-box error';
         sendResult.textContent = 'Gagal menghubungi server: ' + err.message;
+        loadErrorLogs();
       } finally {
         sendBtn.disabled = false;
       }

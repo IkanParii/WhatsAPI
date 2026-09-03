@@ -25,6 +25,24 @@ function addActivityLog(entry) {
     if (activityLogs.length > MAX_LOGS) activityLogs.pop();
 }
 
+// Error Log Management
+const errorLogs = [];
+const MAX_ERROR_LOGS = 50;
+let errorLogId = 0;
+
+function addErrorLog(entry) {
+    const item = {
+        id: ++errorLogId,
+        timestamp: new Date().toISOString(),
+        type: entry.type || 'system',
+        message: entry.message || '',
+        details: entry.details ? (typeof entry.details === 'object' ? JSON.stringify(entry.details) : String(entry.details)) : null
+    };
+    errorLogs.unshift(item);
+    if (errorLogs.length > MAX_ERROR_LOGS) errorLogs.pop();
+    console.error(`[ERROR] [${item.type}] ${item.message}`);
+}
+
 function getOrSetWebhookUrl(newUrl) {
     const webhookPath = path.join('auth_info_baileys', 'webhook_url.txt');
     if (newUrl !== undefined) {
@@ -66,9 +84,24 @@ async function forwardToWebhook(payload) {
         });
         clearTimeout(timeout);
 
-        return { success: res.ok, status: `${res.status} ${res.statusText}` };
+        if (!res.ok) {
+            addErrorLog({
+                type: 'webhook',
+                message: `Webhook endpoint merespon dengan status ${res.status} ${res.statusText}`,
+                details: { url, event: payload?.event, from: payload?.from }
+            });
+            return { success: false, status: `${res.status} ${res.statusText}` };
+        }
+
+        return { success: true, status: `${res.status} ${res.statusText}` };
     } catch (err) {
-        return { success: false, status: `Error: ${err.message}` };
+        const errDesc = err.name === 'AbortError' ? 'Timeout (5s)' : err.message;
+        addErrorLog({
+            type: 'webhook',
+            message: `Gagal mengirim payload ke webhook: ${errDesc}`,
+            details: { url, error: err.message }
+        });
+        return { success: false, status: `Error: ${errDesc}` };
     }
 }
 
@@ -133,7 +166,14 @@ async function connectToWhatsApp () {
             isConnected = false;
             currentQR = null;
             const statusCode = lastDisconnect?.error?.output?.statusCode;
+            const errMessage = lastDisconnect?.error?.message || 'Connection closed';
             console.log(`[WhatsApp] Koneksi terputus. Status Code: ${statusCode}`);
+
+            addErrorLog({
+                type: 'whatsapp',
+                message: `Koneksi terputus (Status: ${statusCode || 'Unknown'}): ${errMessage}`,
+                details: { statusCode, error: lastDisconnect?.error?.stack || errMessage }
+            });
 
             // AUTO-DELETE: Jika belum login atau sesi logout (401), hapus sesi lama agar QR baru muncul
             if (!state.creds?.me || statusCode === DisconnectReason.loggedOut) {
@@ -390,32 +430,89 @@ app.post('/reset-session', requireAuth, (req, res) => {
 
 app.post('/send', requireAuth, async (req, res) => {
     try {
-        const { to, message } = req.body;
+        let { to, message } = req.body;
         if (!to || typeof to !== 'string' || !message || typeof message !== 'string') {
-            return res.status(400).json({ error: 'Missing or invalid "to" or "message" (must be non-empty strings)' });
+            const errTxt = 'Missing or invalid "to" or "message" (must be non-empty strings)';
+            addErrorLog({ type: 'send', message: errTxt, details: req.body });
+            return res.status(400).json({ error: errTxt });
         }
 
         if (message.length > 4096) {
-            return res.status(400).json({ error: 'Message exceeds maximum limit of 4096 characters' });
+            const errTxt = 'Message exceeds maximum limit of 4096 characters';
+            addErrorLog({ type: 'send', message: errTxt });
+            return res.status(400).json({ error: errTxt });
         }
 
         if (!sock || !isConnected) {
-            return res.status(503).json({ error: 'WhatsApp not connected yet. Please scan the QR code first.' });
+            const errTxt = 'WhatsApp not connected yet. Please scan the QR code first.';
+            addErrorLog({ type: 'send', message: errTxt, details: { to } });
+            return res.status(503).json({ error: errTxt });
         }
 
-        const cleanTo = to.trim().replace(/[^0-9@.a-z_]/gi, '');
-        if (cleanTo.length < 5) {
-            return res.status(400).json({ error: 'Invalid destination phone number or JID' });
+        let target = to.trim();
+        // Bersihkan prefix "JID:", "jid:", atau whitespace yang tidak sengaja tertempel
+        target = target.replace(/^jid\s*:?\s*/i, '').trim();
+
+        // Normalisasi tujuan
+        if (!target.includes('@')) {
+            // Hilangkan tanda + jika ada
+            if (target.startsWith('+')) target = target.slice(1);
+            // Ubah format lokal Indonesia 08xxx ke 628xxx
+            if (target.startsWith('08')) {
+                target = '62' + target.slice(1);
+            }
+            // Bersihkan sisa karakter non-angka
+            target = target.replace(/[^0-9]/g, '');
+
+            // Deteksi grup WhatsApp (nomor grup berdigit banyak dimulai 12036...)
+            if (target.startsWith('12036') && target.length >= 17) {
+                target = `${target}@g.us`;
+            } else {
+                target = `${target}@s.whatsapp.net`;
+            }
+        } else {
+            // Sudah memiliki domain @, bersihkan karakter aneh
+            target = target.replace(/[^0-9@.a-z_-]/gi, '');
         }
 
-        const jid = cleanTo.includes('@') ? cleanTo : `${cleanTo}@s.whatsapp.net`;
-        
-        await sock.sendMessage(jid, { text: message });
-        res.json({ status: 'sent', to: jid });
+        if (target.length < 7) {
+            const errTxt = 'Invalid destination phone number or JID';
+            addErrorLog({ type: 'send', message: errTxt, details: { to, target } });
+            return res.status(400).json({ error: errTxt });
+        }
+
+        console.log(`[WhatsApp] Mengirim pesan ke ${target}...`);
+        const sentResult = await sock.sendMessage(target, { text: message });
+
+        addActivityLog({
+            from: target,
+            pushName: 'Keluar (API)',
+            message: message,
+            isGroup: target.endsWith('@g.us'),
+            isCommand: false,
+            command: null,
+            webhookStatus: 'N/A'
+        });
+
+        res.json({ status: 'sent', to: target, messageId: sentResult?.key?.id });
     } catch (err) {
         console.error('Error sending message:', err);
+        addErrorLog({
+            type: 'send',
+            message: `Gagal mengirim pesan ke ${req.body?.to || 'target'}: ${err.message}`,
+            details: { to: req.body?.to, error: err.stack || err.message }
+        });
         res.status(500).json({ error: 'Failed to send message', details: err.message });
     }
+});
+
+app.get('/error-logs', requireAuth, (req, res) => {
+    res.json({ errors: errorLogs });
+});
+
+app.post('/error-logs/clear', requireAuth, (req, res) => {
+    errorLogs.length = 0;
+    res.json({ success: true, message: 'Log error berhasil dikosongkan.' });
 });
 
 app.listen(PORT, () => {
