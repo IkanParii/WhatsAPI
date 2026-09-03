@@ -101,7 +101,20 @@ async function connectToWhatsApp () {
         sock = null;
     }
 
-    const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
+    let { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
+
+    // AUTO-DELETE: Jika sesi di disk belum pernah terhubung/pairing (tidak ada state.creds.me),
+    // bersihkan sesi gantung agar Baileys selalu meminta QR Code baru yang segar dari WhatsApp!
+    if (!state.creds?.me) {
+        const credFile = path.join('auth_info_baileys', 'creds.json');
+        if (fs.existsSync(credFile)) {
+            console.log('[WhatsApp] Mendeteksi kredensial gantung yang belum terhubung. Auto-delete...');
+            clearBaileysAuth();
+            const fresh = await useMultiFileAuthState('auth_info_baileys');
+            state = fresh.state;
+            saveCreds = fresh.saveCreds;
+        }
+    }
     
     sock = makeWASocket({
         auth: state,
@@ -122,9 +135,9 @@ async function connectToWhatsApp () {
             const statusCode = lastDisconnect?.error?.output?.statusCode;
             console.log(`[WhatsApp] Koneksi terputus. Status Code: ${statusCode}`);
 
-            // Jika logout atau kredensial invalid (401), hapus sesi lama agar Baileys meminta QR baru
-            if (statusCode === DisconnectReason.loggedOut) {
-                console.log('[WhatsApp] Sesi telah logout / kedaluwarsa. Membersihkan kredensial lama...');
+            // AUTO-DELETE: Jika belum login atau sesi logout (401), hapus sesi lama agar QR baru muncul
+            if (!state.creds?.me || statusCode === DisconnectReason.loggedOut) {
+                console.log('[WhatsApp] Sesi pairing belum tersambung / kedaluwarsa. Auto-delete kredensial lama...');
                 clearBaileysAuth();
             }
 
