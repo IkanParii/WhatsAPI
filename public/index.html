@@ -14,6 +14,7 @@
       --primary: #25d366;
       --primary-hover: #1ebd5a;
       --danger: #ef4444;
+      --danger-hover: #dc2626;
       --border: #334155;
     }
 
@@ -30,6 +31,8 @@
       padding: 24px 16px;
       display: flex;
       justify-content: center;
+      min-height: 100vh;
+      align-items: flex-start;
     }
 
     .container {
@@ -38,6 +41,12 @@
       display: flex;
       flex-direction: column;
       gap: 20px;
+    }
+
+    /* Auth Box for Login */
+    #auth-screen {
+      max-width: 400px;
+      margin: 60px auto 0;
     }
 
     header {
@@ -58,6 +67,38 @@
 
     .title span {
       color: var(--primary);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-pill {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      background: #0f172a;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      border: 1px solid var(--border);
+    }
+
+    .btn-logout {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-logout:hover {
+      background: var(--danger);
+      color: #fff;
+      border-color: var(--danger);
     }
 
     .status-badge {
@@ -93,7 +134,7 @@
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 20px;
+      padding: 22px;
     }
 
     .card h2 {
@@ -135,7 +176,7 @@
       min-height: 80px;
     }
 
-    button {
+    .btn-primary {
       background: var(--primary);
       color: #0f172a;
       font-weight: 600;
@@ -149,13 +190,14 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
+      width: 100%;
     }
 
-    button:hover {
+    .btn-primary:hover {
       background: var(--primary-hover);
     }
 
-    button:disabled {
+    .btn-primary:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
@@ -214,28 +256,52 @@
   </style>
 </head>
 <body>
-  <div class="container">
+
+  <!-- LOGIN SCREEN -->
+  <div class="container" id="auth-screen">
+    <div class="card" style="text-align: center;">
+      <div class="title" style="justify-content: center; margin-bottom: 8px;">
+        <span>WhatsAPI</span> Login
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">
+        Masuk untuk mengelola bot dan koneksi WhatsApp
+      </p>
+
+      <form id="login-form" style="text-align: left;">
+        <div class="form-group">
+          <label for="login-username">Username</label>
+          <input type="text" id="login-username" value="admin" required autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" placeholder="Password dari .env" required autocomplete="current-password" />
+        </div>
+        <button type="submit" id="login-btn" class="btn-primary">
+          Masuk ke Dashboard
+        </button>
+        <div id="login-result" class="alert"></div>
+      </form>
+      <div class="info-box" style="margin-top: 16px;">
+        Password di-hash aman menggunakan algoritma <code>scrypt</code>.
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN DASHBOARD (HIDDEN UNTIL AUTHENTICATED) -->
+  <div class="container" id="dashboard-screen" style="display: none;">
     <header>
       <div class="title">
         <span>WhatsAPI</span> Dashboard
       </div>
-      <div id="status-badge" class="status-badge">
-        <span class="status-dot"></span>
-        <span id="status-text">Memeriksa status...</span>
+      <div class="header-actions">
+        <div id="status-badge" class="status-badge">
+          <span class="status-dot"></span>
+          <span id="status-text">Memeriksa status...</span>
+        </div>
+        <span class="user-pill">👤 admin</span>
+        <button id="logout-btn" class="btn-logout">Keluar</button>
       </div>
     </header>
-
-    <!-- API Key Settings -->
-    <div class="card" id="api-key-card">
-      <h2>Pengaturan API Key</h2>
-      <div class="form-group">
-        <label for="api-key-input">API Key (Opsional - Diperlukan jika server mengaktifkan API_KEY)</label>
-        <input type="password" id="api-key-input" placeholder="Masukkan API Key server Anda..." />
-      </div>
-      <div class="info-box">
-        API Key disimpan di browser lokal (localStorage) dan dikirim via header <code>x-api-key</code>.
-      </div>
-    </div>
 
     <!-- QR Code / Status Section -->
     <div class="card" id="connection-card">
@@ -249,7 +315,7 @@
         </div>
       </div>
       <div id="connected-section" style="display: none; text-align: center; padding: 24px;">
-        <h3 style="color: var(--primary); margin-bottom: 8px;">WhatsApp Terhubung!</h3>
+        <h3 style="color: var(--primary); margin-bottom: 8px;">WhatsApp Terhubung! 🟢</h3>
         <p style="color: var(--text-muted); font-size: 0.9rem;">
           Bot sedang aktif dan siap mengirim/menerima pesan. Pesan di grup/kontak dengan awalan <code>nad,</code> akan otomatis direspon.
         </p>
@@ -268,7 +334,7 @@
           <label for="message">Isi Pesan</label>
           <textarea id="message" placeholder="Ketik pesan yang ingin dikirim..." required></textarea>
         </div>
-        <button type="submit" id="send-btn">
+        <button type="submit" id="send-btn" class="btn-primary" style="width: auto;">
           <span>Kirim Pesan</span>
         </button>
         <div id="send-result" class="alert"></div>
@@ -280,52 +346,127 @@
       <h2>Fitur Listener Bot</h2>
       <div class="info-box">
         <p>• <strong>Chat Personal & Grup:</strong> Bot mendengarkan semua pesan yang masuk.</p>
-        <p>• <strong>Prefix Perintah:</strong> Hanya pesan yang diawali kata <code>nad,</code> (misal: <code>nad, cek status</code>) yang akan dibalas oleh bot.</p>
-        <p>• <strong>Keamanan:</strong> Pastikan setting <code>API_KEY</code> di VPS sebelum mempublikasikan port 3000 ke internet.</p>
+        <p>• <strong>Prefix Perintah:</strong> Hanya pesan yang diawali kata <code>nad,</code> (misal: <code>nad, konfirmasi</code>) yang akan dibalas oleh bot.</p>
+        <p>• <strong>Autentikasi & Keamanan:</strong> Login web dilindungi password yang di-hash dengan <code>scrypt</code>.</p>
       </div>
     </div>
   </div>
 
   <script>
+    const authScreen = document.getElementById('auth-screen');
+    const dashboardScreen = document.getElementById('dashboard-screen');
+    const loginForm = document.getElementById('login-form');
+    const loginBtn = document.getElementById('login-btn');
+    const loginResult = document.getElementById('login-result');
+    const logoutBtn = document.getElementById('logout-btn');
+
     const statusBadge = document.getElementById('status-badge');
     const statusText = document.getElementById('status-text');
     const qrSection = document.getElementById('qr-section');
     const qrContainer = document.getElementById('qrcode');
     const qrHint = document.getElementById('qr-hint');
     const connectedSection = document.getElementById('connected-section');
-    const apiKeyInput = document.getElementById('api-key-input');
     const sendForm = document.getElementById('send-form');
     const sendBtn = document.getElementById('send-btn');
     const sendResult = document.getElementById('send-result');
 
     let qrCodeObj = null;
     let lastQR = null;
+    let pollTimer = null;
 
-    // Load saved API Key
-    const savedKey = localStorage.getItem('whatsapi_key') || '';
-    apiKeyInput.value = savedKey;
-
-    apiKeyInput.addEventListener('input', (e) => {
-      localStorage.setItem('whatsapi_key', e.target.value.trim());
-    });
-
-    function getHeaders() {
-      const headers = { 'Content-Type': 'application/json' };
-      const key = apiKeyInput.value.trim();
-      if (key) {
-        headers['x-api-key'] = key;
-      }
-      return headers;
+    function getToken() {
+      return localStorage.getItem('whatsapi_session_token') || '';
     }
 
-    async function checkStatus() {
+    function setToken(token) {
+      if (token) {
+        localStorage.setItem('whatsapi_session_token', token);
+      } else {
+        localStorage.removeItem('whatsapi_session_token');
+      }
+    }
+
+    function showDashboard() {
+      authScreen.style.display = 'none';
+      dashboardScreen.style.display = 'flex';
+      checkStatus();
+      if (!pollTimer) {
+        pollTimer = setInterval(checkStatus, 3000);
+      }
+    }
+
+    function showLogin() {
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+      setToken('');
+      authScreen.style.display = 'block';
+      dashboardScreen.style.display = 'none';
+      qrContainer.innerHTML = '';
+      lastQR = null;
+    }
+
+    // Login Submission
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      loginBtn.disabled = true;
+      loginResult.className = 'alert';
+      loginResult.style.display = 'none';
+
       try {
-        const res = await fetch('/status', { headers: getHeaders() });
+        const res = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.token) {
+          setToken(data.token);
+          showDashboard();
+        } else {
+          loginResult.className = 'alert error';
+          loginResult.textContent = data.error || 'Username atau password salah';
+        }
+      } catch (err) {
+        loginResult.className = 'alert error';
+        loginResult.textContent = 'Gagal menghubungi server: ' + err.message;
+      } finally {
+        loginBtn.disabled = false;
+      }
+    });
+
+    // Logout
+    logoutBtn.addEventListener('click', async () => {
+      const token = getToken();
+      try {
+        await fetch('/logout', {
+          method: 'POST',
+          headers: { 'x-api-key': token }
+        });
+      } catch {}
+      showLogin();
+    });
+
+    // Check WhatsApp Connection Status
+    async function checkStatus() {
+      const token = getToken();
+      if (!token) {
+        showLogin();
+        return;
+      }
+
+      try {
+        const res = await fetch('/status', {
+          headers: { 'x-api-key': token }
+        });
+
         if (res.status === 401) {
-          statusBadge.className = 'status-badge disconnected';
-          statusText.textContent = 'API Key Salah / Dibutuhkan';
-          qrHint.textContent = 'Masukkan API Key yang benar pada kolom di atas untuk melihat QR Code.';
-          qrContainer.innerHTML = '';
+          showLogin();
           return;
         }
 
@@ -367,15 +508,12 @@
       }
     }
 
-    // Poll status every 3 seconds
-    checkStatus();
-    setInterval(checkStatus, 3000);
-
-    // Handle send form
+    // Handle Send Message
     sendForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const to = document.getElementById('recipient').value.trim();
       const message = document.getElementById('message').value.trim();
+      const token = getToken();
 
       sendBtn.disabled = true;
       sendResult.className = 'alert';
@@ -384,7 +522,10 @@
       try {
         const res = await fetch('/send', {
           method: 'POST',
-          headers: getHeaders(),
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': token
+          },
           body: JSON.stringify({ to, message })
         });
 
@@ -404,6 +545,13 @@
         sendBtn.disabled = false;
       }
     });
+
+    // Check on startup if token already exists
+    if (getToken()) {
+      showDashboard();
+    } else {
+      showLogin();
+    }
   </script>
 </body>
 </html>

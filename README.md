@@ -1,29 +1,38 @@
 # WhatsAPI
 
-API WhatsApp ringan berbasis Node.js (@whiskeysockets/baileys) & Express dengan dukungan Web GUI Dashboard dan Docker.
+API WhatsApp ringan berbasis Node.js (@whiskeysockets/baileys) & Express dengan Web GUI Dashboard terproteksi login dan dukungan Docker.
 
 ## Fitur
-1. **Web GUI Dashboard**: Akses via browser untuk memantau status, scan QR Code WhatsApp secara visual, dan form kirim pesan langsung.
-2. **HTTP API**: Mengirim pesan ke kontak personal maupun grup (`POST /send`).
-3. **Keamanan (Security)**: Proteksi `API_KEY` untuk mencegah akses liar saat dipublikasikan di VPS publik.
-4. **Listener Bot**: Membaca pesan masuk di grup dan kontak pribadi, hanya merespon perintah dengan prefix `nad,`.
-5. **Persistent Session**: Menggunakan Docker Volume agar sesi login WhatsApp tetap tersimpan saat container di-restart.
+1. **Web GUI Dashboard Terproteksi**: Halaman login dengan username `admin` dan password ter-hash aman (menggunakan algoritma `scrypt`).
+2. **Scan QR Code di Web**: Scan langsung dari layar browser tanpa repot membuka log konsol VPS.
+3. **HTTP API**: Mengirim pesan ke kontak personal maupun grup (`POST /send`).
+4. **Keamanan Ganda**:
+   - Web GUI dilindungi login admin (password di-hash).
+   - HTTP API dilindungi `API_KEY` (bisa diatur sendiri atau di-generate otomatis oleh server).
+5. **Listener Bot**: Membaca pesan masuk di grup dan kontak pribadi, hanya merespon perintah dengan prefix `nad,`.
+6. **Persistent Session**: Menggunakan Docker Volume agar sesi login WhatsApp tetap tersimpan saat container di-restart.
 
 ---
 
-## 🔒 Konfigurasi Keamanan (Wajib untuk VPS)
+## 🔒 Konfigurasi Keamanan (.env)
 
 Sebelum menjalankan di VPS yang terhubung ke internet:
 1. Salin file konfigurasi environment:
    ```bash
    cp .env.example .env
    ```
-2. Buka `.env` dan atur `API_KEY` rahasia Anda:
+2. Buka `.env` dan atur password admin Anda:
    ```env
    PORT=3000
-   API_KEY=kunci_rahasia_anda_di_sini
+
+   # Password login Web Dashboard (Username: admin)
+   # Password akan otomatis di-hash secara aman menggunakan scrypt + salt acak
+   ADMIN_PASSWORD=password_admin_rahasia_anda
+
+   # Kunci rahasia untuk akses HTTP API luar (curl / webhook)
+   # Jika dikosongkan, server akan men-generate kunci acak secara otomatis
+   API_KEY=ganti_dengan_api_key_rahasia_anda
    ```
-*Jika `API_KEY` diaktifkan, semua request ke API dan Web GUI wajib menyertakan API Key tersebut via header `x-api-key`.*
 
 ---
 
@@ -36,43 +45,20 @@ cd WhatsAPI
 docker compose up -d --build
 ```
 
-### 2. Hubungkan WhatsApp (Scan QR Code)
-Anda memiliki dua cara mudah:
-- **Cara 1 (Web Dashboard - Rekomendasi)**: Buka browser ke `http://<IP-VPS-ANDA>:3000`, masukkan API Key (jika diatur), lalu scan QR Code yang muncul di layar web menggunakan WhatsApp HP (Perangkat Tertaut).
-- **Cara 2 (Terminal Log)**:
-  ```bash
-  docker compose logs -f
-  ```
-  Scan QR yang muncul di konsol terminal.
+### 2. Hubungkan WhatsApp via Web GUI
+1. Buka browser ke `http://<IP-VPS-ANDA>:3000`.
+2. Masukkan username: `admin` dan password yang Anda atur di `.env`.
+3. Setelah masuk, scan QR Code yang muncul di layar web menggunakan WhatsApp di HP (Menu: **Perangkat Tertaut > Tautkan Perangkat**).
+4. Selesai! Bot WhatsApp Anda sudah aktif dan siap digunakan.
+
+*(Alternatif: Anda juga tetap bisa melihat QR Code di terminal log lewat perintah `docker compose logs -f`)*
 
 ---
 
-## Web GUI Dashboard
-Buka `http://localhost:3000` atau `http://<IP-VPS>:3000` di browser:
-- Tampilan status koneksi real-time.
-- QR Code live auto-refresh.
-- Form langsung untuk mengirim pesan teks ke kontak atau grup.
+## Penggunaan HTTP API (Programmatik)
 
----
+Untuk mengirim pesan dari sistem eksternal, gunakan endpoint `POST /send` dengan header `x-api-key`:
 
-## Penggunaan HTTP API
-
-### 1. Cek Status Koneksi
-```bash
-curl http://localhost:3000/status \
-  -H "x-api-key: kunci_rahasia_anda_di_sini"
-```
-Response:
-```json
-{ 
-  "connected": true, 
-  "qr": null, 
-  "requiresAuth": true 
-}
-```
-
-### 2. Kirim Pesan
-Kirim request `POST` ke `/send`:
 ```bash
 curl -X POST http://localhost:3000/send \
   -H "Content-Type: application/json" \
@@ -82,7 +68,8 @@ curl -X POST http://localhost:3000/send \
     "message": "Halo dari WhatsAPI!"
   }'
 ```
-> **Catatan untuk parameter `to`**:
+
+> **Catatan parameter `to`**:
 > - Nomor personal: masukkan nomor berawalan kode negara (misal `628123456789`).
 > - Grup: masukkan JID lengkap grup (misal `12036302xxxx@g.us`).
 
