@@ -7,15 +7,15 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     :root {
-      --bg: #0f172a;
-      --card-bg: #1e293b;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
+      --bg: #000000;
+      --card-bg: #0c0c0e;
+      --text: #f4f4f5;
+      --text-muted: #9e9ea7;
       --primary: #25d366;
       --primary-hover: #1ebd5a;
       --danger: #ef4444;
       --danger-hover: #dc2626;
-      --border: #334155;
+      --border: #222226;
       --badge-blue: #0284c7;
       --badge-purple: #9333ea;
     }
@@ -79,7 +79,7 @@
     .user-pill {
       font-size: 0.85rem;
       color: var(--text-muted);
-      background: #0f172a;
+      background: #000000;
       padding: 6px 12px;
       border-radius: 9999px;
       border: 1px solid var(--border);
@@ -110,18 +110,21 @@
       border-radius: 9999px;
       font-size: 0.85rem;
       font-weight: 600;
-      background: #334155;
-      color: #94a3b8;
+      background: #141417;
+      color: #9e9ea7;
+      border: 1px solid var(--border);
     }
 
     .status-badge.connected {
-      background: #064e3b;
+      background: rgba(37, 211, 102, 0.12);
       color: #34d399;
+      border-color: rgba(37, 211, 102, 0.3);
     }
 
     .status-badge.disconnected {
-      background: #7f1d1d;
+      background: rgba(239, 68, 68, 0.12);
       color: #f87171;
+      border-color: rgba(239, 68, 68, 0.3);
     }
 
     .status-dot {
@@ -159,7 +162,7 @@
     input, textarea {
       width: 100%;
       padding: 10px 12px;
-      background: #0f172a;
+      background: #000000;
       border: 1px solid var(--border);
       border-radius: 8px;
       color: var(--text);
@@ -179,7 +182,7 @@
 
     .btn-primary {
       background: var(--primary);
-      color: #0f172a;
+      color: #000000;
       font-weight: 600;
       border: none;
       border-radius: 8px;
@@ -198,7 +201,7 @@
     }
 
     .btn-secondary {
-      background: #334155;
+      background: #141417;
       color: var(--text);
       font-weight: 600;
       border: 1px solid var(--border);
@@ -206,11 +209,12 @@
       padding: 10px 16px;
       cursor: pointer;
       font-size: 0.95rem;
-      transition: background 0.2s;
+      transition: all 0.2s;
     }
 
     .btn-secondary:hover {
-      background: #475569;
+      background: #222227;
+      border-color: #33333d;
     }
 
     .btn-primary:disabled, .btn-secondary:disabled {
@@ -224,7 +228,8 @@
       align-items: center;
       gap: 12px;
       padding: 16px;
-      background: #0f172a;
+      background: #000000;
+      border: 1px solid var(--border);
       border-radius: 8px;
       min-height: 220px;
       justify-content: center;
@@ -264,15 +269,16 @@
     }
 
     .info-box code {
-      background: #0f172a;
+      background: #000000;
       padding: 2px 6px;
       border-radius: 4px;
       color: var(--primary);
+      border: 1px solid var(--border);
     }
 
     /* Log Item Styling */
     .log-item {
-      background: #0f172a;
+      background: #000000;
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 12px;
@@ -327,8 +333,9 @@
     }
 
     .badge-neutral {
-      background: #334155;
-      color: #94a3b8;
+      background: #141417;
+      color: #9e9ea7;
+      border: 1px solid var(--border);
     }
 
     .log-msg {
@@ -381,7 +388,7 @@
     }
 
     .code-box {
-      background: #090d16;
+      background: #040406;
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 14px;
@@ -404,7 +411,7 @@
       position: absolute;
       top: 8px;
       right: 8px;
-      background: #1e293b;
+      background: #141417;
       border: 1px solid var(--border);
       color: var(--text-muted);
       border-radius: 6px;
@@ -416,7 +423,7 @@
 
     .btn-copy:hover {
       background: var(--primary);
-      color: #0f172a;
+      color: #000000;
     }
   </style>
 </head>
@@ -495,7 +502,7 @@
         Gunakan kunci ini pada header <code>x-api-key</code> untuk mengakses API dari luar.
       </p>
       <div style="display: flex; gap: 8px; align-items: center;">
-        <input type="password" id="apikey-input" value="" readonly style="flex: 1; font-family: monospace; background: #0f172a;" />
+        <input type="password" id="apikey-input" value="" readonly style="flex: 1; font-family: monospace; background: #000000;" />
         <button type="button" id="apikey-toggle-btn" class="btn-secondary" onclick="toggleApiKey()">Tampilkan</button>
         <button type="button" class="btn-secondary" onclick="copyApiKey()">Salin</button>
       </div>
@@ -848,7 +855,7 @@ echo $response;</pre>
         }
 
         container.innerHTML = groups.map(g => `
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; background: #0f172a; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; background: #000000; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px;">
             <div style="flex: 1; min-width: 0;">
               <div style="font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(g.name)}</div>
               <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace; margin-top: 2px;">${escapeHtml(g.jid)}</div>
@@ -874,7 +881,7 @@ echo $response;</pre>
         const orig = btn.textContent;
         btn.textContent = 'Tersalin!';
         btn.style.background = 'var(--primary)';
-        btn.style.color = '#0f172a';
+        btn.style.color = '#000000';
         setTimeout(() => {
           btn.textContent = orig;
           btn.style.background = '';
@@ -924,7 +931,7 @@ echo $response;</pre>
           const originalText = btn.textContent;
           btn.textContent = 'Tersalin!';
           btn.style.background = 'var(--primary)';
-          btn.style.color = '#0f172a';
+          btn.style.color = '#000000';
           setTimeout(() => {
             btn.textContent = originalText;
             btn.style.background = '';
