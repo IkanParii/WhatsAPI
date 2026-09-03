@@ -948,7 +948,15 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             Log Pesan Masuk & Aktivitas Webhook
           </div>
-          <span id="log-count" style="font-size: 0.72rem; color: var(--text-dim); font-family: ui-monospace, monospace;">0 aktivitas</span>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <span id="log-count" style="font-size: 0.72rem; color: var(--text-dim); font-family: ui-monospace, monospace;">0 aktivitas</span>
+            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.72rem;" onclick="cleanupAllLogs()" title="Bersihkan log & cache kadaluwarsa (otomatis jalan setiap 8 jam)">
+              Bersihkan (Auto 8 Jam)
+            </button>
+          </div>
+        </div>
+        <div class="card-subtitle">
+          Pesan masuk dan status forwarder ke Webhook. Otomatis di-reset setiap 8 jam untuk menghemat memori.
         </div>
 
         <div id="logs-container" class="log-stream">
@@ -977,7 +985,7 @@
           </div>
         </div>
         <div class="card-subtitle">
-          Mencatat riwayat kegagalan kirim pesan WhatsApp, error webhook forwarder, dan pemutusan koneksi Baileys.
+          Mencatat riwayat kegagalan kirim pesan, error webhook, dan disconnect. Otomatis dibersihkan setiap 8 jam untuk menghemat disk.
         </div>
 
         <div id="error-logs-container" class="log-stream">
@@ -1700,6 +1708,20 @@ echo $response;</pre>
         loadErrorLogs();
       } catch (e) {
         alert('Gagal membersihkan log error: ' + e.message);
+      }
+    }
+
+    async function cleanupAllLogs() {
+      if (!confirm('Jalankan pembersihan sekarang? Seluruh log aktivitas dan log error akan dikosongkan.')) return;
+      const token = getToken();
+      try {
+        const res = await fetch('/logs/cleanup', { method: 'POST', headers: { 'x-api-key': token } });
+        const data = await res.json();
+        alert(data.message || 'Pembersihan berhasil dijalankan.');
+        loadActivityLogs();
+        loadErrorLogs();
+      } catch (err) {
+        alert('Gagal membersihkan log: ' + err.message);
       }
     }
 

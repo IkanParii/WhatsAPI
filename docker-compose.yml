@@ -12,3 +12,8 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
       - API_KEY=${API_KEY:-}
       - WEBHOOK_URL=${WEBHOOK_URL:-}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

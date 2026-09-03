@@ -43,6 +43,55 @@ function addErrorLog(entry) {
     console.error(`[ERROR] [${item.type}] ${item.message}`);
 }
 
+// Auto-cleanup logs & temporary sync files every 8 hours
+const CLEANUP_INTERVAL_MS = 8 * 60 * 60 * 1000;
+let lastCleanupTime = Date.now();
+
+function performScheduledCleanup() {
+    const actCount = activityLogs.length;
+    const errCount = errorLogs.length;
+    activityLogs.length = 0;
+    errorLogs.length = 0;
+    lastCleanupTime = Date.now();
+    console.log(`[System] Auto-cleanup berkala (8 jam): ${actCount} log aktivitas & ${errCount} log error dibersihkan.`);
+
+    // Bersihkan file pre-key / cache lama di auth_info_baileys agar disk tidak membengkak
+    const dir = 'auth_info_baileys';
+    if (fs.existsSync(dir)) {
+        try {
+            const files = fs.readdirSync(dir);
+            const now = Date.now();
+            const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+            let cleanedFiles = 0;
+            for (const file of files) {
+                // Jangan sentuh kredensial utama
+                if (file === 'creds.json' || file === 'api_key.txt' || file === 'admin_cred.json' || file === 'webhook_url.txt') {
+                    continue;
+                }
+                // Hapus pre-key yang sudah lebih dari 24 jam
+                if (file.startsWith('pre-key-') || file.startsWith('app-state-sync-version')) {
+                    const filePath = path.join(dir, file);
+                    try {
+                        const stats = fs.statSync(filePath);
+                        if (now - stats.mtimeMs > ONE_DAY_MS) {
+                            fs.unlinkSync(filePath);
+                            cleanedFiles++;
+                        }
+                    } catch {}
+                }
+            }
+            if (cleanedFiles > 0) {
+                console.log(`[System] Auto-cleanup: ${cleanedFiles} file pre-key kadaluwarsa dibersihkan dari disk.`);
+            }
+        } catch (e) {
+            console.error('[System] Gagal auto-cleanup file:', e.message);
+        }
+    }
+}
+
+// Jalankan auto-cleanup setiap 8 jam
+setInterval(performScheduledCleanup, CLEANUP_INTERVAL_MS);
+
 function getOrSetWebhookUrl(newUrl) {
     const webhookPath = path.join('auth_info_baileys', 'webhook_url.txt');
     if (newUrl !== undefined) {
@@ -513,6 +562,11 @@ app.get('/error-logs', requireAuth, (req, res) => {
 app.post('/error-logs/clear', requireAuth, (req, res) => {
     errorLogs.length = 0;
     res.json({ success: true, message: 'Log error berhasil dikosongkan.' });
+});
+
+app.post('/logs/cleanup', requireAuth, (req, res) => {
+    performScheduledCleanup();
+    res.json({ success: true, message: 'Pembersihan berkala berhasil dijalankan (log & cache dikosongkan).' });
 });
 
 app.listen(PORT, () => {
