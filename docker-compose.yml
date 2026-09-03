@@ -1,0 +1,11 @@
+services:
+  whatsapi:
+    build: .
+    container_name: whatsapi
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./auth_info_baileys:/app/auth_info_baileys
+    environment:
+      - PORT=3000
