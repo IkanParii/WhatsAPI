@@ -38,6 +38,33 @@ async function connectToWhatsApp () {
             console.log('WhatsApp connection opened successfully!');
         }
     });
+
+    sock.ev.on('messages.upsert', async (m) => {
+        try {
+            const msg = m.messages?.[0];
+            if (!msg || !msg.message || msg.key.fromMe) return;
+
+            // Extract text from conversation, extendedTextMessage, or caption
+            const text = msg.message.conversation || 
+                         msg.message.extendedTextMessage?.text || 
+                         msg.message.imageMessage?.caption || 
+                         '';
+
+            const trimmed = text.trim();
+            if (trimmed.toLowerCase().startsWith('nad,')) {
+                const command = trimmed.slice(4).trim();
+                const sender = msg.key.remoteJid;
+                const isGroup = sender.endsWith('@g.us');
+
+                console.log(`[Command Received] from: ${sender} (Group: ${isGroup}), command: "${command}"`);
+
+                const replyText = `[Nad Bot]\nCommand diterima: "${command || '(kosong)'}"\nStatus: Menunggu perizinan/integrasi logika.`;
+                await sock.sendMessage(sender, { text: replyText }, { quoted: msg });
+            }
+        } catch (err) {
+            console.error('Error handling incoming message:', err);
+        }
+    });
 }
 
 app.get('/status', (req, res) => {
