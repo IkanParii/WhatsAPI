@@ -2,6 +2,9 @@ import express from 'express';
 import { makeWASocket, useMultiFileAuthState, DisconnectReason } from '@whiskeysockets/baileys';
 import qrcode from 'qrcode-terminal';
 import pino from 'pino';
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
 
 const app = express();
 app.use(express.json({ limit: '100kb' }));
@@ -73,10 +76,32 @@ async function connectToWhatsApp () {
     });
 }
 
-const API_KEY = process.env.API_KEY || '';
+function getOrGenerateApiKey() {
+    if (process.env.API_KEY && process.env.API_KEY.trim()) {
+        return process.env.API_KEY.trim();
+    }
+
+    const keyFilePath = path.join('auth_info_baileys', 'api_key.txt');
+    try {
+        if (fs.existsSync(keyFilePath)) {
+            const savedKey = fs.readFileSync(keyFilePath, 'utf8').trim();
+            if (savedKey) return savedKey;
+        }
+
+        const newKey = crypto.randomBytes(16).toString('hex');
+        if (!fs.existsSync('auth_info_baileys')) {
+            fs.mkdirSync('auth_info_baileys', { recursive: true });
+        }
+        fs.writeFileSync(keyFilePath, newKey, 'utf8');
+        return newKey;
+    } catch {
+        return crypto.randomBytes(16).toString('hex');
+    }
+}
+
+const API_KEY = getOrGenerateApiKey();
 
 function requireAuth(req, res, next) {
-    if (!API_KEY) return next();
     const token = req.headers['x-api-key'] || req.query.api_key;
     if (!token || token !== API_KEY) {
         return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key' });
@@ -131,12 +156,9 @@ app.post('/send', requireAuth, async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    if (!API_KEY) {
-        console.warn('\n[SECURITY WARNING] API_KEY environment variable is NOT set!');
-        console.warn('The API and Web GUI are publicly accessible without authentication.');
-        console.warn('Set API_KEY in your environment or .env to secure your service.\n');
-    } else {
-        console.log('[SECURITY] API_KEY authentication is ENABLED.');
-    }
+    console.log(`\n======================================================`);
+    console.log(`🔑 [API KEY AKTIF]: ${API_KEY}`);
+    console.log(`Gunakan kunci ini pada Web GUI atau header 'x-api-key'`);
+    console.log(`======================================================\n`);
     connectToWhatsApp();
 });
