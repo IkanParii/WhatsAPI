@@ -15,6 +15,75 @@ let sock;
 let isConnected = false;
 let currentQR = null;
 
+// Webhook & Activity Log Management
+let currentWebhookUrl = null;
+const activityLogs = [];
+const MAX_LOGS = 25;
+
+function addActivityLog(entry) {
+    activityLogs.unshift({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        timestamp: new Date().toISOString(),
+        ...entry
+    });
+    if (activityLogs.length > MAX_LOGS) activityLogs.pop();
+}
+
+function getOrSetWebhookUrl(newUrl) {
+    const webhookPath = path.join('auth_info_baileys', 'webhook_url.txt');
+    if (newUrl !== undefined) {
+        const trimmed = String(newUrl).trim();
+        try {
+            if (!fs.existsSync('auth_info_baileys')) fs.mkdirSync('auth_info_baileys', { recursive: true });
+            fs.writeFileSync(webhookPath, trimmed, 'utf8');
+        } catch {}
+        currentWebhookUrl = trimmed;
+        return trimmed;
+    }
+
+    if (currentWebhookUrl !== null) return currentWebhookUrl;
+
+    try {
+        if (fs.existsSync(webhookPath)) {
+            const saved = fs.readFileSync(webhookPath, 'utf8').trim();
+            if (saved) {
+                currentWebhookUrl = saved;
+                return saved;
+            }
+        }
+    } catch {}
+
+    currentWebhookUrl = (process.env.WEBHOOK_URL || '').trim();
+    return currentWebhookUrl;
+}
+
+async function forwardToWebhook(payload) {
+    const url = getOrSetWebhookUrl();
+    if (!url) {
+        return { success: false, status: 'No Webhook configured' };
+    }
+
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'WhatsAPI-Gateway/1.0'
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        });
+        clearTimeout(timeout);
+
+        return { success: res.ok, status: `${res.status} ${res.statusText}` };
+    } catch (err) {
+        return { success: false, status: `Error: ${err.message}` };
+    }
+}
+
 async function connectToWhatsApp () {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
     
@@ -59,12 +128,42 @@ async function connectToWhatsApp () {
                          msg.message.imageMessage?.caption || 
                          '';
 
+            const sender = msg.key.remoteJid;
+            const isGroup = sender.endsWith('@g.us');
+            const pushName = msg.pushName || '';
             const trimmed = text.trim();
-            if (trimmed.toLowerCase().startsWith('nad,')) {
-                const command = trimmed.slice(4).trim();
-                const sender = msg.key.remoteJid;
-                const isGroup = sender.endsWith('@g.us');
+            const isCommand = trimmed.toLowerCase().startsWith('nad,');
+            const command = isCommand ? trimmed.slice(4).trim() : null;
 
+            // Forward to Webhook asynchronously (non-blocking)
+            const webhookPayload = {
+                event: 'messages.upsert',
+                from: sender,
+                isGroup,
+                pushName,
+                message: text,
+                isCommand,
+                command,
+                timestamp: Math.floor(Date.now() / 1000)
+            };
+
+            forwardToWebhook(webhookPayload).then(whResult => {
+                addActivityLog({
+                    from: sender,
+                    pushName,
+                    isGroup,
+                    message: text.slice(0, 100),
+                    isCommand,
+                    command,
+                    webhookStatus: whResult.status
+                });
+
+                if (!whResult.success && getOrSetWebhookUrl()) {
+                    console.warn(`[Webhook Delivery]: ${whResult.status}`);
+                }
+            });
+
+            if (isCommand) {
                 console.log(`[Command Received] from: ${sender} (Group: ${isGroup}), command: "${command}"`);
 
                 const replyText = `[Nad Bot]\nCommand diterima: "${command || '(kosong)'}"\nStatus: Menunggu perizinan/integrasi logika.`;
@@ -184,6 +283,30 @@ app.get('/status', (req, res) => {
         qr: currentQR,
         requiresAuth: true
     });
+});
+
+app.get('/webhook', requireAuth, (req, res) => {
+    res.json({ webhookUrl: getOrSetWebhookUrl() });
+});
+
+app.post('/webhook', requireAuth, (req, res) => {
+    const { url } = req.body || {};
+    const updated = getOrSetWebhookUrl(url !== undefined ? url : '');
+    res.json({ success: true, webhookUrl: updated });
+});
+
+app.post('/webhook/test', requireAuth, async (req, res) => {
+    const testPayload = {
+        event: 'test',
+        message: 'Ping dari WhatsAPI Gateway',
+        timestamp: Math.floor(Date.now() / 1000)
+    };
+    const result = await forwardToWebhook(testPayload);
+    res.json(result);
+});
+
+app.get('/logs', requireAuth, (req, res) => {
+    res.json({ logs: activityLogs });
 });
 
 app.post('/send', requireAuth, async (req, res) => {
