@@ -8,29 +8,34 @@
   <style>
     :root {
       --bg: #000000;
-      --card-bg: #0c0c0e;
+      --card-bg: #0a0a0c;
+      --card-elevated: #111114;
+      --border: #1e1e22;
+      --border-focus: #383842;
       --text: #f4f4f5;
-      --text-muted: #9e9ea7;
-      --primary: #25d366;
-      --primary-hover: #1ebd5a;
-      --danger: #ef4444;
-      --danger-hover: #dc2626;
-      --border: #222226;
-      --badge-blue: #0284c7;
-      --badge-purple: #9333ea;
+      --text-muted: #8e8e96;
+      --text-dim: #5c5c64;
+      --primary: #10b981;
+      --primary-hover: #059669;
+      --primary-dim: rgba(16, 185, 129, 0.12);
+      --danger: #f43f5e;
+      --danger-dim: rgba(244, 63, 94, 0.12);
+      --code-bg: #050507;
+      --radius: 8px;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
 
     body {
       background-color: var(--bg);
       color: var(--text);
-      padding: 24px 16px;
+      padding: 20px 16px 60px;
       display: flex;
       justify-content: center;
       min-height: 100vh;
@@ -39,253 +44,396 @@
 
     .container {
       width: 100%;
-      max-width: 820px;
+      max-width: 900px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 14px;
     }
 
     #auth-screen {
-      max-width: 400px;
-      margin: 60px auto 0;
+      max-width: 380px;
+      margin: 80px auto 0;
     }
 
+    /* Top Bar */
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 12px;
+      padding: 6px 0 16px;
       border-bottom: 1px solid var(--border);
+      margin-bottom: 2px;
     }
 
     .title {
-      font-size: 1.5rem;
+      font-size: 1.15rem;
       font-weight: 700;
       display: flex;
       align-items: center;
       gap: 8px;
+      letter-spacing: -0.02em;
     }
 
-    .title span {
-      color: var(--primary);
+    .brand-tag {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      background: var(--card-elevated);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .user-pill {
-      font-size: 0.85rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
-      background: #000000;
-      padding: 6px 12px;
-      border-radius: 9999px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: var(--card-elevated);
       border: 1px solid var(--border);
     }
 
     .btn-logout {
       background: transparent;
-      color: var(--text-muted);
+      color: var(--text-dim);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 6px 12px;
-      font-size: 0.85rem;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      font-weight: 500;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s ease;
     }
 
     .btn-logout:hover {
-      background: var(--danger);
-      color: #fff;
-      border-color: var(--danger);
+      color: var(--text);
+      border-color: var(--border-focus);
+      background: var(--card-elevated);
     }
 
     .status-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 12px;
+      padding: 4px 10px;
       border-radius: 9999px;
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       font-weight: 600;
-      background: #141417;
-      color: #9e9ea7;
+      background: var(--card-elevated);
       border: 1px solid var(--border);
+      color: var(--text-muted);
     }
 
     .status-badge.connected {
-      background: rgba(37, 211, 102, 0.12);
+      background: var(--primary-dim);
       color: #34d399;
-      border-color: rgba(37, 211, 102, 0.3);
+      border-color: rgba(16, 185, 129, 0.3);
     }
 
     .status-badge.disconnected {
-      background: rgba(239, 68, 68, 0.12);
-      color: #f87171;
-      border-color: rgba(239, 68, 68, 0.3);
+      background: var(--danger-dim);
+      color: #fb7185;
+      border-color: rgba(244, 63, 94, 0.3);
     }
 
     .status-dot {
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: currentColor;
     }
 
+    .status-badge.connected .status-dot {
+      box-shadow: 0 0 6px currentColor;
+    }
+
+    /* Cards */
     .card {
       background: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 22px;
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      transition: border-color 0.15s ease;
     }
 
     .card h2 {
-      font-size: 1.15rem;
-      margin-bottom: 14px;
+      font-size: 0.92rem;
       font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      margin-bottom: 6px;
     }
 
+    .card p.card-desc {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      line-height: 1.45;
+      margin-bottom: 12px;
+    }
+
+    /* 2-Column Responsive Layout */
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2col {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .col-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Forms */
     .form-group {
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      margin-bottom: 14px;
+      gap: 5px;
+      margin-bottom: 12px;
     }
 
     label {
-      font-size: 0.875rem;
+      font-size: 0.75rem;
+      font-weight: 500;
       color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
 
     input, textarea {
       width: 100%;
-      padding: 10px 12px;
+      padding: 9px 12px;
       background: #000000;
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 6px;
       color: var(--text);
-      font-size: 0.95rem;
+      font-size: 0.85rem;
       outline: none;
-      transition: border-color 0.2s;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
     input:focus, textarea:focus {
-      border-color: var(--primary);
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 1px var(--border-focus);
     }
 
     textarea {
       resize: vertical;
-      min-height: 80px;
+      min-height: 76px;
+      line-height: 1.45;
     }
 
+    /* Buttons */
     .btn-primary {
       background: var(--primary);
       color: #000000;
       font-weight: 600;
       border: none;
-      border-radius: 8px;
-      padding: 10px 16px;
+      border-radius: 6px;
+      padding: 8px 14px;
       cursor: pointer;
-      font-size: 0.95rem;
-      transition: background 0.2s;
-      display: flex;
+      font-size: 0.82rem;
+      transition: all 0.15s ease;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
+      white-space: nowrap;
     }
 
     .btn-primary:hover {
       background: var(--primary-hover);
     }
 
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
     .btn-secondary {
-      background: #141417;
+      background: var(--card-elevated);
       color: var(--text);
-      font-weight: 600;
+      font-weight: 500;
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 16px;
+      border-radius: 6px;
+      padding: 8px 14px;
       cursor: pointer;
-      font-size: 0.95rem;
-      transition: all 0.2s;
+      font-size: 0.82rem;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;
     }
 
     .btn-secondary:hover {
-      background: #222227;
-      border-color: #33333d;
+      background: #19191e;
+      border-color: var(--border-focus);
+    }
+
+    .btn-secondary:active {
+      transform: scale(0.98);
     }
 
     .btn-primary:disabled, .btn-secondary:disabled {
-      opacity: 0.6;
+      opacity: 0.5;
       cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Connection Card / QR Display */
+    .qr-split {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 4px 0;
+    }
+
+    @media (max-width: 640px) {
+      .qr-split {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
     }
 
     #qr-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
-      padding: 16px;
-      background: #000000;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      min-height: 220px;
-      justify-content: center;
+      gap: 10px;
+      flex-shrink: 0;
     }
 
     #qrcode {
-      background: #fff;
+      background: #ffffff;
       padding: 12px;
       border-radius: 8px;
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 200px;
+      min-height: 200px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
     }
 
-    .alert {
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      margin-top: 12px;
+    #qrcode img, #qrcode canvas {
+      display: block;
+      max-width: 100%;
+    }
+
+    .qr-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .step-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--card-elevated);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 0.72rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    #connected-section {
       display: none;
+      padding: 14px 18px;
+      background: var(--primary-dim);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 6px;
+    }
+
+    /* Alerts */
+    .alert {
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      margin-top: 10px;
+      display: none;
+      border: 1px solid transparent;
     }
 
     .alert.success {
-      background: #064e3b;
+      background: var(--primary-dim);
       color: #34d399;
+      border-color: rgba(16, 185, 129, 0.3);
       display: block;
     }
 
     .alert.error {
-      background: #7f1d1d;
-      color: #f87171;
+      background: var(--danger-dim);
+      color: #fb7185;
+      border-color: rgba(244, 63, 94, 0.3);
       display: block;
     }
 
     .info-box {
-      font-size: 0.85rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
       line-height: 1.5;
     }
 
     .info-box code {
       background: #000000;
-      padding: 2px 6px;
+      padding: 2px 5px;
       border-radius: 4px;
       color: var(--primary);
       border: 1px solid var(--border);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.75rem;
     }
 
-    /* Log Item Styling */
-    .log-item {
-      background: #000000;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px;
-      font-size: 0.875rem;
+    /* Activity Stream */
+    .log-stream-box {
+      max-height: 280px;
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 6px;
+    }
+
+    .log-item {
+      background: #000000;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
     }
 
     .log-header {
@@ -293,11 +441,12 @@
       justify-content: space-between;
       align-items: center;
       gap: 8px;
-      flex-wrap: wrap;
     }
 
     .log-sender {
-      font-weight: 600;
+      font-weight: 500;
+      font-family: ui-monospace, monospace;
+      font-size: 0.78rem;
       color: var(--text);
       display: flex;
       align-items: center;
@@ -305,68 +454,75 @@
     }
 
     .badge {
-      font-size: 0.72rem;
-      padding: 2px 6px;
-      border-radius: 4px;
+      font-size: 0.66rem;
+      padding: 1px 5px;
+      border-radius: 3px;
       font-weight: 600;
       text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
     .badge-cmd {
-      background: #7c3aed;
-      color: #fff;
+      background: rgba(147, 51, 234, 0.15);
+      border: 1px solid rgba(147, 51, 234, 0.3);
+      color: #c084fc;
     }
 
     .badge-group {
-      background: #0284c7;
-      color: #fff;
+      background: rgba(2, 132, 199, 0.15);
+      border: 1px solid rgba(2, 132, 199, 0.3);
+      color: #38bdf8;
     }
 
     .badge-ok {
-      background: #064e3b;
+      background: var(--primary-dim);
+      border: 1px solid rgba(16, 185, 129, 0.3);
       color: #34d399;
     }
 
     .badge-err {
-      background: #7f1d1d;
-      color: #f87171;
+      background: var(--danger-dim);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      color: #fb7185;
     }
 
     .badge-neutral {
-      background: #141417;
-      color: #9e9ea7;
+      background: var(--card-elevated);
+      color: var(--text-dim);
       border: 1px solid var(--border);
     }
 
     .log-msg {
       color: var(--text-muted);
       word-break: break-all;
+      line-height: 1.4;
     }
 
     .log-time {
-      font-size: 0.75rem;
-      color: var(--text-muted);
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      font-family: ui-monospace, monospace;
     }
 
-    /* Tabs & Code Box Styling */
+    /* Tabs & Code Documentation */
     .tabs-nav {
       display: flex;
       gap: 4px;
       border-bottom: 1px solid var(--border);
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       overflow-x: auto;
     }
 
     .tab-btn {
       background: transparent;
       border: none;
-      color: var(--text-muted);
-      padding: 8px 14px;
-      font-size: 0.85rem;
+      color: var(--text-dim);
+      padding: 7px 12px;
+      font-size: 0.78rem;
       cursor: pointer;
       border-bottom: 2px solid transparent;
-      font-weight: 600;
-      transition: all 0.2s;
+      font-weight: 500;
+      transition: all 0.15s ease;
       white-space: nowrap;
     }
 
@@ -375,8 +531,8 @@
     }
 
     .tab-btn.active {
-      color: var(--primary);
-      border-bottom-color: var(--primary);
+      color: var(--text);
+      border-bottom-color: var(--text);
     }
 
     .tab-pane {
@@ -388,16 +544,16 @@
     }
 
     .code-box {
-      background: #040406;
+      background: var(--code-bg);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px;
+      border-radius: 6px;
+      padding: 12px 14px;
       position: relative;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.85rem;
-      color: #38bdf8;
+      font-size: 0.78rem;
+      color: #e4e4e7;
       overflow-x: auto;
-      margin: 10px 0 16px;
+      margin: 8px 0 12px;
       line-height: 1.5;
     }
 
@@ -411,19 +567,21 @@
       position: absolute;
       top: 8px;
       right: 8px;
-      background: #141417;
+      background: var(--card-elevated);
       border: 1px solid var(--border);
       color: var(--text-muted);
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 0.75rem;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 0.72rem;
+      font-weight: 500;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s ease;
     }
 
     .btn-copy:hover {
-      background: var(--primary);
-      color: #000000;
+      background: #1c1c22;
+      color: var(--text);
+      border-color: var(--border-focus);
     }
   </style>
 </head>
@@ -431,15 +589,16 @@
 
   <!-- LOGIN SCREEN -->
   <div class="container" id="auth-screen">
-    <div class="card" style="text-align: center;">
-      <div class="title" style="justify-content: center; margin-bottom: 8px;">
-        <span>WhatsAPI</span> Login
+    <div class="card" style="padding: 24px;">
+      <div class="title" style="margin-bottom: 4px;">
+        <span>WhatsAPI</span>
+        <span class="brand-tag">Login</span>
       </div>
-      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">
-        Masuk untuk mengelola bot dan koneksi WhatsApp
+      <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 18px;">
+        Masuk untuk mengelola gateway WhatsApp dan integrasi Webhook.
       </p>
 
-      <form id="login-form" style="text-align: left;">
+      <form id="login-form">
         <div class="form-group">
           <label for="login-username">Username</label>
           <input type="text" id="login-username" value="admin" required autocomplete="username" />
@@ -448,22 +607,24 @@
           <label for="login-password">Password</label>
           <input type="password" id="login-password" placeholder="Password dari .env" required autocomplete="current-password" />
         </div>
-        <button type="submit" id="login-btn" class="btn-primary" style="width: 100%;">
+        <button type="submit" id="login-btn" class="btn-primary" style="width: 100%; margin-top: 4px;">
           Masuk ke Dashboard
         </button>
         <div id="login-result" class="alert"></div>
       </form>
-      <div class="info-box" style="margin-top: 16px;">
+      <div class="info-box" style="margin-top: 14px; font-size: 0.75rem; color: var(--text-dim);">
         Password di-hash aman menggunakan algoritma <code>scrypt</code>.
       </div>
     </div>
   </div>
 
-  <!-- MAIN DASHBOARD -->
+  <!-- MAIN DASHBOARD (SINGLE-PAGE DEVELOPER COCKPIT) -->
   <div class="container" id="dashboard-screen" style="display: none;">
+    <!-- Top Header Bar -->
     <header>
       <div class="title">
-        <span>WhatsAPI</span> Gateway
+        <span>WhatsAPI</span>
+        <span class="brand-tag">Gateway</span>
       </div>
       <div class="header-actions">
         <div id="status-badge" class="status-badge">
@@ -475,118 +636,156 @@
       </div>
     </header>
 
-    <!-- QR Code / Status Section -->
+    <!-- SECTION 1: STATUS KONEKSI & QR CODE -->
     <div class="card" id="connection-card">
       <h2>Status Koneksi WhatsApp</h2>
+
+      <!-- Disconnected State: QR Section -->
       <div id="qr-section">
-        <div id="qr-container">
-          <div id="qrcode"></div>
-          <p id="qr-hint" style="color: var(--text-muted); font-size: 0.9rem;">
-            Buka WhatsApp di HP &gt; Perangkat Tertaut &gt; Tautkan Perangkat lalu scan QR ini.
+        <div class="qr-split">
+          <div id="qr-container">
+            <div id="qrcode"></div>
+            <button type="button" id="refresh-qr-btn" class="btn-secondary" style="font-size: 0.75rem; padding: 4px 10px;" onclick="requestReconnect()">
+              Refresh QR
+            </button>
+          </div>
+          <div class="qr-steps">
+            <div style="font-weight: 600; font-size: 0.88rem; color: var(--text); margin-bottom: 2px;">
+              Pindai untuk Menghubungkan
+            </div>
+            <div class="step-item">
+              <span class="step-num">1</span>
+              <span>Buka aplikasi WhatsApp di ponsel Anda.</span>
+            </div>
+            <div class="step-item">
+              <span class="step-num">2</span>
+              <span>Buka <strong>Menu (tiga titik)</strong> atau <strong>Pengaturan</strong> &rarr; pilih <strong>Perangkat Tertaut</strong>.</span>
+            </div>
+            <div class="step-item">
+              <span class="step-num">3</span>
+              <span>Pilih <strong>Tautkan Perangkat</strong> lalu arahkan kamera ke kode QR di samping.</span>
+            </div>
+            <p id="qr-hint" style="color: var(--text-dim); font-size: 0.76rem; margin-top: 4px;">
+              Menunggu kode QR dari WhatsApp...
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connected State Banner -->
+      <div id="connected-section">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span class="status-dot" style="background: var(--primary); width: 8px; height: 8px; box-shadow: 0 0 8px var(--primary);"></span>
+          <div>
+            <h3 style="color: #34d399; font-size: 0.9rem; font-weight: 600;">WhatsApp Terhubung &amp; Siap Digunakan</h3>
+            <p style="color: var(--text-muted); font-size: 0.78rem; margin-top: 2px;">
+              Gateway Baileys aktif. Pesan masuk otomatis di-forward ke Webhook URL dan API siap mengirim pesan.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: 2-COLUMN MAIN UTILITY GRID -->
+    <div class="grid-2col">
+      <!-- Left Column: API Key & Webhook -->
+      <div class="col-stack">
+        <!-- API Key Card -->
+        <div class="card">
+          <h2>API Key Programmatik</h2>
+          <p class="card-desc">
+            Kunci autentikasi wajib pada header <code>x-api-key</code> untuk request API luar.
           </p>
-          <button type="button" class="btn-secondary" style="margin-top: 10px; font-size: 0.8rem; padding: 4px 10px;" onclick="requestReconnect()">Refresh QR</button>
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <input type="password" id="apikey-input" value="" readonly style="flex: 1; font-family: ui-monospace, monospace; font-size: 0.8rem;" />
+            <button type="button" id="apikey-toggle-btn" class="btn-secondary" onclick="toggleApiKey()">Tampilkan</button>
+            <button type="button" class="btn-secondary" onclick="copyApiKey()">Salin</button>
+          </div>
+          <div id="apikey-copy-msg" class="alert"></div>
+        </div>
+
+        <!-- Webhook Configuration Card -->
+        <div class="card">
+          <h2>Konfigurasi Webhook URL</h2>
+          <p class="card-desc">
+            Setiap pesan masuk (personal &amp; grup) diteruskan ke endpoint ini via POST.
+          </p>
+          <form id="webhook-form">
+            <div class="form-group">
+              <input type="url" id="webhook-url" placeholder="https://domain.com/webhook" style="font-family: ui-monospace, monospace; font-size: 0.8rem;" />
+            </div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <button type="submit" id="save-webhook-btn" class="btn-primary">
+                Simpan Webhook
+              </button>
+              <button type="button" id="test-webhook-btn" class="btn-secondary">
+                Test Ping
+              </button>
+            </div>
+            <div id="webhook-result" class="alert"></div>
+          </form>
         </div>
       </div>
-      <div id="connected-section" style="display: none; text-align: center; padding: 24px;">
-        <h3 style="color: var(--primary); margin-bottom: 8px;">WhatsApp Terhubung</h3>
-        <p style="color: var(--text-muted); font-size: 0.9rem;">
-          Gateway aktif dan siap mengirim/menerima pesan. Pesan masuk otomatis di-forward ke Webhook.
-        </p>
+
+      <!-- Right Column: Send Message & Groups List -->
+      <div class="col-stack">
+        <!-- Send Message Card -->
+        <div class="card">
+          <h2>Kirim Pesan WhatsApp</h2>
+          <form id="send-form">
+            <div class="form-group">
+              <label for="recipient">Penerima (Nomor HP / JID Grup)</label>
+              <input type="text" id="recipient" placeholder="628123456789 atau 12036302xxxx@g.us" required style="font-family: ui-monospace, monospace; font-size: 0.8rem;" />
+            </div>
+            <div class="form-group">
+              <label for="message">Isi Pesan</label>
+              <textarea id="message" placeholder="Tulis isi pesan yang ingin dikirim..." required></textarea>
+            </div>
+            <button type="submit" id="send-btn" class="btn-primary">
+              Kirim Pesan
+            </button>
+            <div id="send-result" class="alert"></div>
+          </form>
+        </div>
+
+        <!-- WhatsApp Groups Card -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <h2>Daftar Grup WhatsApp</h2>
+            <button type="button" id="refresh-groups-btn" class="btn-secondary" style="font-size: 0.72rem; padding: 4px 8px;" onclick="loadGroups()">
+              Refresh
+            </button>
+          </div>
+          <p class="card-desc">
+            Grup yang diikuti oleh akun aktif. Salin JID untuk mengirim pesan grup via API.
+          </p>
+          <div id="groups-container" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
+            <p style="color: var(--text-dim); font-size: 0.78rem; text-align: center; padding: 16px;">
+              Hubungkan WhatsApp terlebih dahulu lalu klik Refresh.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- API Key Section -->
+    <!-- SECTION 3: LIVE ACTIVITY STREAM -->
     <div class="card">
-      <h2>API Key Programmatik</h2>
-      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 12px;">
-        Gunakan kunci ini pada header <code>x-api-key</code> untuk mengakses API dari luar.
-      </p>
-      <div style="display: flex; gap: 8px; align-items: center;">
-        <input type="password" id="apikey-input" value="" readonly style="flex: 1; font-family: monospace; background: #000000;" />
-        <button type="button" id="apikey-toggle-btn" class="btn-secondary" onclick="toggleApiKey()">Tampilkan</button>
-        <button type="button" class="btn-secondary" onclick="copyApiKey()">Salin</button>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h2>Log Pesan Masuk &amp; Webhook (Live)</h2>
+        <span id="log-count" style="font-size: 0.75rem; color: var(--text-dim); font-family: ui-monospace, monospace;">0 aktivitas</span>
       </div>
-      <div id="apikey-copy-msg" class="alert" style="margin-top: 8px;"></div>
-    </div>
-
-    <!-- Webhook Forwarder Configuration -->
-    <div class="card">
-      <h2>Konfigurasi Webhook URL (Forwarder Pesan)</h2>
-      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 12px;">
-        Setiap pesan masuk (personal & grup) akan diteruskan ke URL ini melalui request HTTP POST.
-      </p>
-      <form id="webhook-form">
-        <div class="form-group">
-          <label for="webhook-url">Webhook URL Tujuan</label>
-          <input type="url" id="webhook-url" placeholder="https://webhook.site/xxx atau http://backend:8000/wa-webhook" />
-        </div>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button type="submit" id="save-webhook-btn" class="btn-primary">
-            <span>Simpan Webhook</span>
-          </button>
-          <button type="button" id="test-webhook-btn" class="btn-secondary">
-            <span>Test Ping Webhook</span>
-          </button>
-        </div>
-        <div id="webhook-result" class="alert"></div>
-      </form>
-    </div>
-
-    <!-- Live Activity Log -->
-    <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-        <h2>Log Pesan Masuk & Webhook (Live)</h2>
-        <span id="log-count" style="font-size: 0.8rem; color: var(--text-muted);">0 aktivitas</span>
-      </div>
-      <div id="logs-container" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
-        <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 16px;">
+      <div id="logs-container" class="log-stream-box">
+        <p style="color: var(--text-dim); font-size: 0.78rem; text-align: center; padding: 16px;">
           Belum ada pesan masuk tercatat...
         </p>
       </div>
     </div>
 
-    <!-- Message Sender Section -->
-    <div class="card">
-      <h2>Kirim Pesan WhatsApp (Test GUI)</h2>
-      <form id="send-form">
-        <div class="form-group">
-          <label for="recipient">Nomor Tujuan / ID Grup</label>
-          <input type="text" id="recipient" placeholder="Contoh: 628123456789 atau 12036302xxxx@g.us" required />
-        </div>
-        <div class="form-group">
-          <label for="message">Isi Pesan</label>
-          <textarea id="message" placeholder="Ketik pesan yang ingin dikirim..." required></textarea>
-        </div>
-        <button type="submit" id="send-btn" class="btn-primary">
-          <span>Kirim Pesan</span>
-        </button>
-        <div id="send-result" class="alert"></div>
-      </form>
-    </div>
-
-    <!-- Groups Section -->
-    <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <h2>Daftar Grup WhatsApp</h2>
-        <button type="button" id="refresh-groups-btn" class="btn-secondary" style="font-size: 0.8rem; padding: 6px 12px;" onclick="loadGroups()">
-          Refresh
-        </button>
-      </div>
-      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 12px;">
-        Daftar grup yang diikuti oleh nomor aktif. Salin JID untuk mengirim pesan ke grup via API.
-      </p>
-      <div id="groups-container" style="max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
-        <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 16px;">
-          Hubungkan WhatsApp terlebih dahulu lalu klik Refresh.
-        </p>
-      </div>
-    </div>
-
-    <!-- INTERACTIVE DOCUMENTATION SECTION -->
+    <!-- SECTION 4: INTERACTIVE API DOCUMENTATION -->
     <div class="card">
       <h2>Dokumentasi &amp; Contoh Integrasi API</h2>
-      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">
-        Gunakan contoh kode di bawah ini untuk mengirim pesan WhatsApp atau menerima Webhook dari aplikasi Anda.
+      <p class="card-desc">
+        Contoh pemanggilan endpoint <code>POST /send</code> dan spesifikasi format Webhook payload.
       </p>
 
       <div class="tabs-nav">
@@ -594,13 +793,12 @@
         <button class="tab-btn" onclick="switchDocTab('node')">Node.js</button>
         <button class="tab-btn" onclick="switchDocTab('python')">Python</button>
         <button class="tab-btn" onclick="switchDocTab('php')">PHP</button>
-        <button class="tab-btn" onclick="switchDocTab('webhook')">Format Webhook</button>
-        <button class="tab-btn" onclick="switchDocTab('rules')">Aturan Nomor & Bot</button>
+        <button class="tab-btn" onclick="switchDocTab('webhook')">Schema Webhook</button>
+        <button class="tab-btn" onclick="switchDocTab('rules')">Aturan Format</button>
       </div>
 
       <!-- Tab cURL -->
       <div id="doc-curl" class="tab-pane active">
-        <p style="font-size: 0.85rem; color: var(--text-muted);">Contoh kirim pesan menggunakan cURL di terminal:</p>
         <div class="code-box">
           <button class="btn-copy" onclick="copyCode(this)">Salin</button>
           <pre id="code-curl">curl -X POST <span class="api-url">http://localhost:3000</span>/send \
@@ -615,7 +813,6 @@
 
       <!-- Tab Node.js -->
       <div id="doc-node" class="tab-pane">
-        <p style="font-size: 0.85rem; color: var(--text-muted);">Contoh kirim pesan menggunakan fetch di Node.js / JavaScript:</p>
         <div class="code-box">
           <button class="btn-copy" onclick="copyCode(this)">Salin</button>
           <pre id="code-node">const res = await fetch('<span class="api-url">http://localhost:3000</span>/send', {
@@ -636,7 +833,6 @@ console.log(data);</pre>
 
       <!-- Tab Python -->
       <div id="doc-python" class="tab-pane">
-        <p style="font-size: 0.85rem; color: var(--text-muted);">Contoh kirim pesan menggunakan Python requests:</p>
         <div class="code-box">
           <button class="btn-copy" onclick="copyCode(this)">Salin</button>
           <pre id="code-python">import requests
@@ -658,7 +854,6 @@ print(response.json())</pre>
 
       <!-- Tab PHP -->
       <div id="doc-php" class="tab-pane">
-        <p style="font-size: 0.85rem; color: var(--text-muted);">Contoh kirim pesan menggunakan cURL di PHP:</p>
         <div class="code-box">
           <button class="btn-copy" onclick="copyCode(this)">Salin</button>
           <pre id="code-php">&lt;?php
@@ -684,7 +879,6 @@ echo $response;</pre>
 
       <!-- Tab Webhook -->
       <div id="doc-webhook" class="tab-pane">
-        <p style="font-size: 0.85rem; color: var(--text-muted);">Payload JSON yang akan dikirimkan gateway ke Webhook URL Anda saat ada pesan masuk:</p>
         <div class="code-box">
           <button class="btn-copy" onclick="copyCode(this)">Salin</button>
           <pre>{
@@ -699,32 +893,31 @@ echo $response;</pre>
 }</pre>
         </div>
         <div class="info-box">
-          <p>• <strong>isGroup</strong>: Bernilai <code>true</code> jika pesan berasal dari Grup WhatsApp, atau <code>false</code> jika chat pribadi.</p>
-          <p>• <strong>isCommand</strong>: Bernilai <code>true</code> jika pesan diawali dengan kata <code>nad,</code>.</p>
-          <p>• <strong>command</strong>: Potongan isi teks setelah kata <code>nad,</code>.</p>
+          <p>&bull; <strong>isGroup</strong>: Bernilai <code>true</code> jika pesan berasal dari Grup WhatsApp, atau <code>false</code> jika chat pribadi.</p>
+          <p style="margin-top: 3px;">&bull; <strong>isCommand</strong>: Bernilai <code>true</code> jika pesan diawali dengan kata <code>nad,</code>.</p>
+          <p style="margin-top: 3px;">&bull; <strong>command</strong>: Potongan isi teks setelah kata <code>nad,</code>.</p>
         </div>
       </div>
 
       <!-- Tab Rules -->
       <div id="doc-rules" class="tab-pane">
-        <div class="info-box" style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="info-box" style="display: flex; flex-direction: column; gap: 8px;">
           <div>
             <strong style="color: var(--text);">Format Parameter "to":</strong>
-            <p>• <strong>Nomor Personal</strong>: Masukkan nomor dengan kode negara (tanpa simbol + atau spasi). Contoh: <code>628123456789</code>.</p>
-            <p>• <strong>Grup WhatsApp</strong>: Masukkan ID JID lengkap grup WhatsApp yang berakhiran <code>@g.us</code>. Contoh: <code>120363029988776655@g.us</code>.</p>
+            <p style="margin-top: 2px;">&bull; <strong>Nomor Personal</strong>: Masukkan nomor dengan kode negara (tanpa simbol + atau spasi). Contoh: <code>628123456789</code>.<br />
+            &bull; <strong>Grup WhatsApp</strong>: Masukkan ID JID lengkap grup WhatsApp yang berakhiran <code>@g.us</code>. Contoh: <code>120363029988776655@g.us</code>.</p>
           </div>
           <div>
             <strong style="color: var(--text);">Prefix Perintah Bot ("nad,"):</strong>
-            <p>Bot mendengarkan setiap pesan. Jika user mengirim pesan berawalan <code>nad,</code> (misal: <em>nad, konfirmasi</em>), bot akan membalas otomatis menandakan perintah diterima.</p>
+            <p style="margin-top: 2px;">Bot mendengarkan setiap pesan. Jika user mengirim pesan berawalan <code>nad,</code> (misal: <em>nad, konfirmasi</em>), bot akan membalas otomatis menandakan perintah diterima.</p>
           </div>
           <div>
-            <strong style="color: var(--text);">Keamanan & API Key:</strong>
-            <p>Akses programmatik ke <code>POST /send</code> wajib menyertakan header <code>x-api-key</code> sesuai kunci yang aktif di server.</p>
+            <strong style="color: var(--text);">Keamanan &amp; API Key:</strong>
+            <p style="margin-top: 2px;">Akses programmatik ke <code>POST /send</code> wajib menyertakan header <code>x-api-key</code> sesuai kunci yang aktif di server.</p>
           </div>
         </div>
       </div>
     </div>
-
   </div>
 
   <script>
@@ -744,15 +937,14 @@ echo $response;</pre>
     const sendForm = document.getElementById('send-form');
     const sendBtn = document.getElementById('send-btn');
     const sendResult = document.getElementById('send-result');
+    const logsContainer = document.getElementById('logs-container');
+    const logCount = document.getElementById('log-count');
 
     const webhookForm = document.getElementById('webhook-form');
     const webhookUrlInput = document.getElementById('webhook-url');
     const saveWebhookBtn = document.getElementById('save-webhook-btn');
     const testWebhookBtn = document.getElementById('test-webhook-btn');
     const webhookResult = document.getElementById('webhook-result');
-
-    const logsContainer = document.getElementById('logs-container');
-    const logCount = document.getElementById('log-count');
 
     let qrCodeObj = null;
     let lastQR = null;
@@ -817,7 +1009,7 @@ echo $response;</pre>
       navigator.clipboard.writeText(cachedApiKey).then(() => {
         if (msg) {
           msg.className = 'alert success';
-          msg.textContent = 'API Key berhasil disalin ke clipboard!';
+          msg.textContent = 'API Key berhasil disalin ke clipboard';
           setTimeout(() => { msg.className = 'alert'; msg.style.display = 'none'; }, 2000);
         }
       }).catch(() => {
@@ -844,30 +1036,30 @@ echo $response;</pre>
         const data = await res.json();
 
         if (!res.ok) {
-          container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 16px;">${escapeHtml(data.error || 'Hubungkan WhatsApp terlebih dahulu.')}</p>`;
+          container.innerHTML = `<p style="color: var(--text-dim); font-size: 0.78rem; text-align: center; padding: 16px;">${escapeHtml(data.error || 'Hubungkan WhatsApp terlebih dahulu.')}</p>`;
           return;
         }
 
         const groups = data.groups || [];
         if (groups.length === 0) {
-          container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 16px;">Tidak ada grup ditemukan pada akun ini.</p>';
+          container.innerHTML = '<p style="color: var(--text-dim); font-size: 0.78rem; text-align: center; padding: 16px;">Tidak ada grup ditemukan pada akun ini.</p>';
           return;
         }
 
         container.innerHTML = groups.map(g => `
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; background: #000000; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; background: #000000; border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px;">
             <div style="flex: 1; min-width: 0;">
-              <div style="font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(g.name)}</div>
-              <div style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace; margin-top: 2px;">${escapeHtml(g.jid)}</div>
+              <div style="font-weight: 500; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text);">${escapeHtml(g.name)}</div>
+              <div style="font-size: 0.7rem; color: var(--text-dim); font-family: ui-monospace, monospace; margin-top: 1px;">${escapeHtml(g.jid)}</div>
             </div>
             <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
-              <span style="font-size: 0.75rem; color: var(--text-muted);">${g.participantCount} member</span>
-              <button class="btn-secondary" style="font-size: 0.75rem; padding: 4px 8px;" onclick="copyGroupJid('${escapeHtml(g.jid)}', this)">Salin JID</button>
+              <span style="font-size: 0.7rem; color: var(--text-dim);">${g.participantCount} member</span>
+              <button class="btn-secondary" style="font-size: 0.7rem; padding: 3px 7px;" onclick="copyGroupJid('${escapeHtml(g.jid)}', this)">Salin JID</button>
             </div>
           </div>
         `).join('');
       } catch (err) {
-        container.innerHTML = `<p style="color: var(--danger); font-size: 0.85rem; text-align: center; padding: 16px;">Error: ${escapeHtml(err.message)}</p>`;
+        container.innerHTML = `<p style="color: var(--danger); font-size: 0.78rem; text-align: center; padding: 16px;">Error: ${escapeHtml(err.message)}</p>`;
       } finally {
         if (btn) {
           btn.disabled = false;
@@ -936,7 +1128,7 @@ echo $response;</pre>
             btn.textContent = originalText;
             btn.style.background = '';
             btn.style.color = '';
-          }, 2000);
+          }, 1800);
         });
       }
     }
@@ -1101,7 +1293,8 @@ echo $response;</pre>
         const data = await res.json();
         if (res.ok) {
           webhookResult.className = 'alert success';
-          webhookResult.textContent = 'Webhook URL berhasil disimpan!';
+          webhookResult.textContent = 'Webhook URL berhasil diperbarui';
+          setTimeout(() => { webhookResult.style.display = 'none'; }, 3000);
         } else {
           webhookResult.className = 'alert error';
           webhookResult.textContent = 'Gagal menyimpan: ' + (data.error || 'Terjadi kesalahan');
@@ -1114,7 +1307,7 @@ echo $response;</pre>
       }
     });
 
-    // Test Webhook Ping
+    // Test Ping Webhook
     testWebhookBtn.addEventListener('click', async () => {
       const token = getToken();
       testWebhookBtn.disabled = true;
@@ -1126,17 +1319,18 @@ echo $response;</pre>
           method: 'POST',
           headers: { 'x-api-key': token }
         });
+
         const data = await res.json();
         if (data.success) {
           webhookResult.className = 'alert success';
-          webhookResult.textContent = 'Ping Webhook Berhasil: ' + data.status;
+          webhookResult.textContent = 'Ping berhasil: ' + data.status;
         } else {
           webhookResult.className = 'alert error';
-          webhookResult.textContent = 'Ping Webhook Gagal: ' + data.status;
+          webhookResult.textContent = 'Ping gagal: ' + data.status;
         }
       } catch (err) {
         webhookResult.className = 'alert error';
-        webhookResult.textContent = 'Gagal menghubungi server: ' + err.message;
+        webhookResult.textContent = 'Gagal menghubungi webhook: ' + err.message;
       } finally {
         testWebhookBtn.disabled = false;
       }
@@ -1149,6 +1343,7 @@ echo $response;</pre>
         const res = await fetch('/logs', {
           headers: { 'x-api-key': token }
         });
+
         if (!res.ok) return;
 
         const data = await res.json();
@@ -1156,37 +1351,48 @@ echo $response;</pre>
         logCount.textContent = logs.length + ' aktivitas';
 
         if (logs.length === 0) {
-          logsContainer.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 16px;">Belum ada pesan masuk tercatat...</p>';
+          logsContainer.innerHTML = '<p style="color: var(--text-dim); font-size: 0.78rem; text-align: center; padding: 16px;">Belum ada pesan masuk tercatat...</p>';
           return;
         }
 
-        logsContainer.innerHTML = logs.map(l => {
-          const timeStr = new Date(l.timestamp).toLocaleTimeString();
-          const isCmdBadge = l.isCommand ? '<span class="badge badge-cmd">NAD, CMD</span>' : '';
-          const groupBadge = l.isGroup ? '<span class="badge badge-group">Grup</span>' : '<span class="badge badge-neutral">Personal</span>';
+        logsContainer.innerHTML = logs.map(log => {
+          const date = new Date(log.timestamp);
+          const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+          const isCmdBadge = log.isCommand ? '<span class="badge badge-cmd">CMD</span>' : '';
+          const groupBadge = log.isGroup ? '<span class="badge badge-group">Grup</span>' : '<span class="badge badge-neutral">Personal</span>';
           
           let whBadge = '<span class="badge badge-neutral">No Webhook</span>';
-          if (l.webhookStatus) {
-            if (l.webhookStatus.startsWith('200') || l.webhookStatus.startsWith('201') || l.webhookStatus.startsWith('204')) {
-              whBadge = `<span class="badge badge-ok">WH: ${l.webhookStatus}</span>`;
-            } else if (l.webhookStatus !== 'No Webhook configured') {
-              whBadge = `<span class="badge badge-err">WH: ${l.webhookStatus}</span>`;
+          if (log.webhookStatus) {
+            if (log.webhookStatus.startsWith('200') || log.webhookStatus.startsWith('201') || log.webhookStatus.startsWith('204')) {
+              whBadge = `<span class="badge badge-ok">${escapeHtml(log.webhookStatus)}</span>`;
+            } else if (log.webhookStatus !== 'No Webhook configured') {
+              whBadge = `<span class="badge badge-err">${escapeHtml(log.webhookStatus)}</span>`;
             }
           }
 
-          const senderName = l.pushName ? `${l.pushName} (${l.from})` : l.from;
+          const senderName = log.pushName ? `${log.pushName} (${log.from})` : log.from;
 
           return `
             <div class="log-item">
               <div class="log-header">
-                <span class="log-sender">${escapeHtml(senderName)} ${groupBadge} ${isCmdBadge}</span>
-                <span class="log-time">${timeStr} | ${whBadge}</span>
+                <div class="log-sender">
+                  <span>${escapeHtml(senderName)}</span>
+                  ${groupBadge}
+                  ${isCmdBadge}
+                </div>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                  ${whBadge}
+                  <span class="log-time">${timeStr}</span>
+                </div>
               </div>
-              <div class="log-msg">${escapeHtml(l.message || '')}</div>
+              <div class="log-msg">${escapeHtml(log.message || '')}</div>
             </div>
           `;
         }).join('');
-      } catch {}
+      } catch (err) {
+        // silent fail on logs fetch error
+      }
     }
 
     function escapeHtml(str) {
@@ -1197,7 +1403,7 @@ echo $response;</pre>
         .replace(/"/g, '&quot;');
     }
 
-    // Handle Send Message
+    // Send Message Form
     sendForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const to = document.getElementById('recipient').value.trim();
@@ -1219,13 +1425,15 @@ echo $response;</pre>
         });
 
         const data = await res.json();
+
         if (res.ok) {
           sendResult.className = 'alert success';
-          sendResult.textContent = 'Pesan berhasil dikirim ke ' + data.to;
+          sendResult.textContent = 'Pesan berhasil terkirim ke ' + data.to;
           document.getElementById('message').value = '';
+          setTimeout(() => { sendResult.style.display = 'none'; }, 3000);
         } else {
           sendResult.className = 'alert error';
-          sendResult.textContent = 'Gagal: ' + (data.error || 'Terjadi kesalahan');
+          sendResult.textContent = 'Gagal mengirim: ' + (data.error || 'Terjadi kesalahan');
         }
       } catch (err) {
         sendResult.className = 'alert error';
@@ -1235,7 +1443,7 @@ echo $response;</pre>
       }
     });
 
-    // Check startup
+    // Initial check
     if (getToken()) {
       showDashboard();
     } else {
