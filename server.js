@@ -5,12 +5,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-let QRCode = null;
-try {
-    const qrcodeModule = await import('qrcode');
-    QRCode = qrcodeModule.default || qrcodeModule;
-} catch {}
-
 const app = express();
 app.use(express.json({ limit: '100kb' }));
 app.use(express.static('public'));
@@ -19,8 +13,6 @@ const PORT = process.env.PORT || 3000;
 let sock;
 let isConnected = false;
 let currentQR = null;
-let currentQRImage = null;
-let reconnectTimer = null;
 
 // Webhook & Activity Log Management
 let currentWebhookUrl = null;
@@ -81,13 +73,6 @@ async function forwardToWebhook(payload) {
 }
 
 async function connectToWhatsApp () {
-    if (sock) {
-        try {
-            sock.ev.removeAllListeners();
-            sock.end(undefined);
-        } catch {}
-    }
-
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
     
     sock = makeWASocket({
@@ -97,41 +82,25 @@ async function connectToWhatsApp () {
 
     sock.ev.on('creds.update', saveCreds);
 
-    sock.ev.on('connection.update', async (update) => {
+    sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect, qr } = update;
         if(qr) {
             currentQR = qr;
-            if (QRCode) {
-                try {
-                    currentQRImage = await QRCode.toDataURL(qr, { margin: 2, width: 280 });
-                } catch {
-                    currentQRImage = null;
-                }
-            }
-            console.log('\n[WhatsApp] QR Code siap di-scan melalui Web Dashboard.');
+            console.log('\nQR Code ready — scan via Web Dashboard at http://localhost:' + PORT);
         }
         if(connection === 'close') {
             isConnected = false;
-            const statusCode = lastDisconnect?.error?.output?.statusCode;
-            const hasCreds = fs.existsSync(path.join('auth_info_baileys', 'creds.json'));
-            console.log('[WhatsApp] Koneksi terputus. Status code:', statusCode);
-
-            if (statusCode === DisconnectReason.loggedOut && hasCreds) {
-                console.log('[WhatsApp] Sesi telah logout dari ponsel.');
-                currentQR = null;
-                currentQRImage = null;
+            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+            console.log('Connection closed due to', lastDisconnect?.error, ', reconnecting:', shouldReconnect);
+            if(shouldReconnect) {
+                connectToWhatsApp();
             } else {
-                clearTimeout(reconnectTimer);
-                reconnectTimer = setTimeout(() => {
-                    connectToWhatsApp();
-                }, 3000);
+                currentQR = null;
             }
         } else if(connection === 'open') {
             isConnected = true;
             currentQR = null;
-            currentQRImage = null;
-            clearTimeout(reconnectTimer);
-            console.log('[WhatsApp] WhatsApp connection opened successfully!');
+            console.log('WhatsApp connection opened successfully!');
         }
     });
 
@@ -292,48 +261,7 @@ app.get('/status', (req, res) => {
         return res.status(401).json({ error: 'Unauthorized', requiresAuth: true });
     }
 
-    res.json({ 
-        connected: isConnected, 
-        qr: currentQR,
-        qrImage: currentQRImage 
-    });
-});
-
-app.post('/reconnect', requireAuth, async (req, res) => {
-    try {
-        currentQR = null;
-        currentQRImage = null;
-        clearTimeout(reconnectTimer);
-        connectToWhatsApp();
-        res.json({ success: true, message: 'Menghubungkan ulang sesi WhatsApp...' });
-    } catch (err) {
-        res.status(500).json({ error: 'Gagal reconnect: ' + err.message });
-    }
-});
-
-app.post('/reset-session', requireAuth, async (req, res) => {
-    try {
-        currentQR = null;
-        currentQRImage = null;
-        isConnected = false;
-        clearTimeout(reconnectTimer);
-        if (sock) {
-            try { sock.ev.removeAllListeners(); sock.end(undefined); } catch {}
-        }
-        const dir = 'auth_info_baileys';
-        if (fs.existsSync(dir)) {
-            const files = fs.readdirSync(dir);
-            for (const file of files) {
-                if (file !== 'api_key.txt' && file !== 'admin_cred.json' && file !== 'webhook_url.txt') {
-                    try { fs.rmSync(path.join(dir, file), { recursive: true, force: true }); } catch {}
-                }
-            }
-        }
-        connectToWhatsApp();
-        res.json({ success: true, message: 'Sesi direset. Kode QR baru sedang disiapkan.' });
-    } catch (err) {
-        res.status(500).json({ error: 'Gagal reset sesi: ' + err.message });
-    }
+    res.json({ connected: isConnected, qr: currentQR });
 });
 
 app.get('/webhook', requireAuth, (req, res) => {
@@ -378,7 +306,16 @@ app.get('/groups', requireAuth, async (req, res) => {
         list.sort((a, b) => a.name.localeCompare(b.name));
         res.json({ groups: list });
     } catch (err) {
-        res.status(500).json({ error: 'Gagal mengambil daftar grup', details: err.message });
+        res.status(500).json({ error: 'Gagal mengambil daftar grup: ' + err.message });
+    }
+});
+
+app.post('/reconnect', requireAuth, (req, res) => {
+    try {
+        connectToWhatsApp();
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
