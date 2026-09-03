@@ -9,3 +9,4 @@ services:
       - ./auth_info_baileys:/app/auth_info_baileys
     environment:
       - PORT=3000
+      - API_KEY=${API_KEY:-}
