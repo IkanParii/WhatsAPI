@@ -288,6 +288,28 @@ app.get('/logs', requireAuth, (req, res) => {
     res.json({ logs: activityLogs });
 });
 
+app.get('/apikey', requireAuth, (req, res) => {
+    res.json({ apiKey: API_KEY });
+});
+
+app.get('/groups', requireAuth, async (req, res) => {
+    if (!sock || !isConnected) {
+        return res.status(503).json({ error: 'WhatsApp belum terhubung. Scan QR terlebih dahulu.' });
+    }
+    try {
+        const groups = await sock.groupFetchAllParticipating();
+        const list = Object.entries(groups).map(([jid, meta]) => ({
+            jid,
+            name: meta.subject || '(Tanpa Nama)',
+            participantCount: meta.participants?.length || 0
+        }));
+        list.sort((a, b) => a.name.localeCompare(b.name));
+        res.json({ groups: list });
+    } catch (err) {
+        res.status(500).json({ error: 'Gagal mengambil daftar grup', details: err.message });
+    }
+});
+
 app.post('/send', requireAuth, async (req, res) => {
     try {
         const { to, message } = req.body;
