@@ -1611,12 +1611,14 @@ echo $response;</pre>
           const isCmdBadge = l.isCommand ? '<span class="tag tag-cmd">CMD</span>' : '';
           const groupBadge = l.isGroup ? '<span class="tag tag-group">Grup</span>' : '<span class="tag tag-muted">Personal</span>';
           
-          let whBadge = '<span class="tag tag-muted">No Webhook</span>';
+          let whBadge = '<span class="tag tag-muted" title="Tidak ada Webhook URL yang diatur">Tanpa Webhook</span>';
           if (l.webhookStatus) {
-            if (l.webhookStatus.startsWith('200') || l.webhookStatus.startsWith('201') || l.webhookStatus.startsWith('204')) {
-              whBadge = `<span class="tag tag-ok">${l.webhookStatus}</span>`;
+            if (l.webhookStatus === 'N/A') {
+              whBadge = '<span class="tag tag-muted" title="Pesan keluar dari API">Pesan Keluar</span>';
+            } else if (l.webhookStatus.startsWith('200') || l.webhookStatus.startsWith('201') || l.webhookStatus.startsWith('204')) {
+              whBadge = `<span class="tag tag-ok" title="Server Webhook Anda merespons sukses">Webhook: ${escapeHtml(l.webhookStatus)}</span>`;
             } else if (l.webhookStatus !== 'No Webhook configured') {
-              whBadge = `<span class="tag tag-err">${l.webhookStatus}</span>`;
+              whBadge = `<span class="tag tag-err" title="Server Webhook Anda mengembalikan error (cek URL webhook di tab Integrasi)">Webhook: ${escapeHtml(l.webhookStatus)}</span>`;
             }
           }
 
