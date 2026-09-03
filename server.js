@@ -72,7 +72,35 @@ async function forwardToWebhook(payload) {
     }
 }
 
+let reconnectTimer = null;
+
+function clearBaileysAuth() {
+    const dir = 'auth_info_baileys';
+    if (!fs.existsSync(dir)) return;
+    try {
+        const files = fs.readdirSync(dir);
+        for (const file of files) {
+            if (file !== 'api_key.txt' && file !== 'admin_cred.json' && file !== 'webhook_url.txt') {
+                try { fs.rmSync(path.join(dir, file), { recursive: true, force: true }); } catch {}
+            }
+        }
+        console.log('[WhatsApp] Sesi lama dibersihkan dari auth_info_baileys.');
+    } catch (err) {
+        console.error('[WhatsApp] Gagal membersihkan auth:', err.message);
+    }
+}
+
 async function connectToWhatsApp () {
+    clearTimeout(reconnectTimer);
+
+    if (sock) {
+        try {
+            sock.ev.removeAllListeners();
+            sock.end(undefined);
+        } catch {}
+        sock = null;
+    }
+
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
     
     sock = makeWASocket({
@@ -86,21 +114,30 @@ async function connectToWhatsApp () {
         const { connection, lastDisconnect, qr } = update;
         if(qr) {
             currentQR = qr;
-            console.log('\nQR Code ready — scan via Web Dashboard at http://localhost:' + PORT);
+            console.log('\n[WhatsApp] QR Code siap di-scan via Web Dashboard di port ' + PORT);
         }
         if(connection === 'close') {
             isConnected = false;
-            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-            console.log('Connection closed due to', lastDisconnect?.error, ', reconnecting:', shouldReconnect);
-            if(shouldReconnect) {
-                connectToWhatsApp();
-            } else {
-                currentQR = null;
+            currentQR = null;
+            const statusCode = lastDisconnect?.error?.output?.statusCode;
+            console.log(`[WhatsApp] Koneksi terputus. Status Code: ${statusCode}`);
+
+            // Jika logout atau kredensial invalid (401), hapus sesi lama agar Baileys meminta QR baru
+            if (statusCode === DisconnectReason.loggedOut) {
+                console.log('[WhatsApp] Sesi telah logout / kedaluwarsa. Membersihkan kredensial lama...');
+                clearBaileysAuth();
             }
+
+            // Selalu jadwalkan reconnect otomatis agar QR code selalu tersedia di dashboard
+            clearTimeout(reconnectTimer);
+            reconnectTimer = setTimeout(() => {
+                connectToWhatsApp();
+            }, 3000);
         } else if(connection === 'open') {
             isConnected = true;
             currentQR = null;
-            console.log('WhatsApp connection opened successfully!');
+            clearTimeout(reconnectTimer);
+            console.log('[WhatsApp] WhatsApp connection opened successfully!');
         }
     });
 
@@ -312,8 +349,27 @@ app.get('/groups', requireAuth, async (req, res) => {
 
 app.post('/reconnect', requireAuth, (req, res) => {
     try {
+        currentQR = null;
+        clearTimeout(reconnectTimer);
+        // Jika belum terhubung, bersihkan sesi lama agar Baileys meminta QR baru yang segar
+        if (!isConnected) {
+            clearBaileysAuth();
+        }
         connectToWhatsApp();
-        res.json({ success: true });
+        res.json({ success: true, message: 'Menghubungkan ulang sesi...' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/reset-session', requireAuth, (req, res) => {
+    try {
+        isConnected = false;
+        currentQR = null;
+        clearTimeout(reconnectTimer);
+        clearBaileysAuth();
+        connectToWhatsApp();
+        res.json({ success: true, message: 'Sesi berhasil direset. Kode QR baru sedang dibuat...' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

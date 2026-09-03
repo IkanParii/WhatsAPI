@@ -4,7 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>WhatsAPI - Gateway Dashboard</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="/qrcode.min.js"></script>
+  <script>
+    if (typeof QRCode === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>');
+    }
+  </script>
   <style>
     :root {
       --bg: #000000;
@@ -645,9 +650,14 @@
         <div class="qr-split">
           <div id="qr-container">
             <div id="qrcode"></div>
-            <button type="button" id="refresh-qr-btn" class="btn-secondary" style="font-size: 0.75rem; padding: 4px 10px;" onclick="requestReconnect()">
-              Refresh QR
-            </button>
+            <div style="display: flex; gap: 6px; margin-top: 4px;">
+              <button type="button" id="refresh-qr-btn" class="btn-secondary" style="font-size: 0.75rem; padding: 4px 10px;" onclick="requestReconnect()">
+                Minta QR Baru
+              </button>
+              <button type="button" class="btn-secondary" style="font-size: 0.75rem; padding: 4px 10px;" onclick="requestResetSession()" title="Bersihkan kredensial lama dan buat QR baru">
+                Reset Sesi
+              </button>
+            </div>
           </div>
           <div class="qr-steps">
             <div style="font-weight: 600; font-size: 0.88rem; color: var(--text); margin-bottom: 2px;">
@@ -674,14 +684,19 @@
 
       <!-- Connected State Banner -->
       <div id="connected-section">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span class="status-dot" style="background: var(--primary); width: 8px; height: 8px; box-shadow: 0 0 8px var(--primary);"></span>
-          <div>
-            <h3 style="color: #34d399; font-size: 0.9rem; font-weight: 600;">WhatsApp Terhubung &amp; Siap Digunakan</h3>
-            <p style="color: var(--text-muted); font-size: 0.78rem; margin-top: 2px;">
-              Gateway Baileys aktif. Pesan masuk otomatis di-forward ke Webhook URL dan API siap mengirim pesan.
-            </p>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="status-dot" style="background: var(--primary); width: 8px; height: 8px; box-shadow: 0 0 8px var(--primary);"></span>
+            <div>
+              <h3 style="color: #34d399; font-size: 0.9rem; font-weight: 600;">WhatsApp Terhubung &amp; Siap Digunakan</h3>
+              <p style="color: var(--text-muted); font-size: 0.78rem; margin-top: 2px;">
+                Gateway Baileys aktif. Pesan masuk otomatis di-forward ke Webhook URL dan API siap mengirim pesan.
+              </p>
+            </div>
           </div>
+          <button type="button" class="btn-secondary" style="font-size: 0.75rem; padding: 4px 10px;" onclick="requestResetSession()">
+            Putuskan / Reset Sesi
+          </button>
         </div>
       </div>
     </div>
@@ -1229,7 +1244,8 @@ echo $response;</pre>
             }
             qrHint.textContent = 'Buka WhatsApp di HP > Perangkat Tertaut > Tautkan Perangkat lalu scan QR ini.';
           } else if (!data.qr) {
-            qrContainer.innerHTML = '';
+            lastQR = null;
+            qrContainer.innerHTML = '<div style="color: #71717a; font-size: 0.78rem; text-align: center; padding: 24px; line-height: 1.4;">Menyiapkan kode QR...<br/><span style="font-size: 0.72rem; color: #a1a1aa;">(Klik tombol "Minta QR Baru" jika tidak muncul)</span></div>';
             qrHint.textContent = 'Menunggu kode QR dari WhatsApp...';
           }
         }
@@ -1244,15 +1260,31 @@ echo $response;</pre>
     // Request Reconnect / Refresh QR
     async function requestReconnect() {
       const token = getToken();
+      qrHint.textContent = 'Meminta kode QR baru...';
       try {
         await fetch('/reconnect', {
           method: 'POST',
           headers: { 'x-api-key': token }
         });
-        qrHint.textContent = 'Meminta kode QR baru...';
         setTimeout(checkStatus, 1500);
       } catch (err) {
         console.error('Reconnect error:', err);
+      }
+    }
+
+    // Reset Sesi (Clear Auth Files)
+    async function requestResetSession() {
+      if (!confirm('Apakah Anda yakin ingin mereset sesi WhatsApp? File kredensial lama akan dibersihkan dan QR baru akan dibuat dari nol.')) return;
+      const token = getToken();
+      qrHint.textContent = 'Mereset sesi & meminta QR baru...';
+      try {
+        await fetch('/reset-session', {
+          method: 'POST',
+          headers: { 'x-api-key': token }
+        });
+        setTimeout(checkStatus, 1500);
+      } catch (err) {
+        alert('Gagal mereset sesi: ' + err.message);
       }
     }
 
