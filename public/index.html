@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WhatsAPI - Dashboard</title>
+  <title>WhatsAPI - Gateway Dashboard</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     :root {
@@ -16,6 +16,8 @@
       --danger: #ef4444;
       --danger-hover: #dc2626;
       --border: #334155;
+      --badge-blue: #0284c7;
+      --badge-purple: #9333ea;
     }
 
     * {
@@ -37,13 +39,12 @@
 
     .container {
       width: 100%;
-      max-width: 800px;
+      max-width: 820px;
       display: flex;
       flex-direction: column;
       gap: 20px;
     }
 
-    /* Auth Box for Login */
     #auth-screen {
       max-width: 400px;
       margin: 60px auto 0;
@@ -182,7 +183,7 @@
       font-weight: 600;
       border: none;
       border-radius: 8px;
-      padding: 12px 18px;
+      padding: 10px 16px;
       cursor: pointer;
       font-size: 0.95rem;
       transition: background 0.2s;
@@ -190,14 +191,29 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      width: 100%;
     }
 
     .btn-primary:hover {
       background: var(--primary-hover);
     }
 
-    .btn-primary:disabled {
+    .btn-secondary {
+      background: #334155;
+      color: var(--text);
+      font-weight: 600;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: #475569;
+    }
+
+    .btn-primary:disabled, .btn-secondary:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
@@ -253,6 +269,77 @@
       border-radius: 4px;
       color: var(--primary);
     }
+
+    /* Log Item Styling */
+    .log-item {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 0.875rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .log-sender {
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-cmd {
+      background: #7c3aed;
+      color: #fff;
+    }
+
+    .badge-group {
+      background: #0284c7;
+      color: #fff;
+    }
+
+    .badge-ok {
+      background: #064e3b;
+      color: #34d399;
+    }
+
+    .badge-err {
+      background: #7f1d1d;
+      color: #f87171;
+    }
+
+    .badge-neutral {
+      background: #334155;
+      color: #94a3b8;
+    }
+
+    .log-msg {
+      color: var(--text-muted);
+      word-break: break-all;
+    }
+
+    .log-time {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
   </style>
 </head>
 <body>
@@ -276,7 +363,7 @@
           <label for="login-password">Password</label>
           <input type="password" id="login-password" placeholder="Password dari .env" required autocomplete="current-password" />
         </div>
-        <button type="submit" id="login-btn" class="btn-primary">
+        <button type="submit" id="login-btn" class="btn-primary" style="width: 100%;">
           Masuk ke Dashboard
         </button>
         <div id="login-result" class="alert"></div>
@@ -287,11 +374,11 @@
     </div>
   </div>
 
-  <!-- MAIN DASHBOARD (HIDDEN UNTIL AUTHENTICATED) -->
+  <!-- MAIN DASHBOARD -->
   <div class="container" id="dashboard-screen" style="display: none;">
     <header>
       <div class="title">
-        <span>WhatsAPI</span> Dashboard
+        <span>WhatsAPI</span> Gateway
       </div>
       <div class="header-actions">
         <div id="status-badge" class="status-badge">
@@ -317,7 +404,43 @@
       <div id="connected-section" style="display: none; text-align: center; padding: 24px;">
         <h3 style="color: var(--primary); margin-bottom: 8px;">WhatsApp Terhubung! 🟢</h3>
         <p style="color: var(--text-muted); font-size: 0.9rem;">
-          Bot sedang aktif dan siap mengirim/menerima pesan. Pesan di grup/kontak dengan awalan <code>nad,</code> akan otomatis direspon.
+          Gateway aktif dan siap mengirim/menerima pesan. Pesan masuk otomatis di-forward ke Webhook.
+        </p>
+      </div>
+    </div>
+
+    <!-- Webhook Forwarder Configuration -->
+    <div class="card">
+      <h2>Konfigurasi Webhook URL (Forwarder Pesan)</h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 12px;">
+        Setiap pesan masuk (personal & grup) akan diteruskan ke URL ini melalui request HTTP POST.
+      </p>
+      <form id="webhook-form">
+        <div class="form-group">
+          <label for="webhook-url">Webhook URL Tujuan</label>
+          <input type="url" id="webhook-url" placeholder="https://webhook.site/xxx atau http://backend:8000/wa-webhook" />
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="submit" id="save-webhook-btn" class="btn-primary">
+            <span>Simpan Webhook</span>
+          </button>
+          <button type="button" id="test-webhook-btn" class="btn-secondary">
+            <span>Test Ping Webhook</span>
+          </button>
+        </div>
+        <div id="webhook-result" class="alert"></div>
+      </form>
+    </div>
+
+    <!-- Live Activity Log -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h2>Log Pesan Masuk & Webhook (Live)</h2>
+        <span id="log-count" style="font-size: 0.8rem; color: var(--text-muted);">0 aktivitas</span>
+      </div>
+      <div id="logs-container" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+        <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 16px;">
+          Belum ada pesan masuk tercatat...
         </p>
       </div>
     </div>
@@ -334,20 +457,20 @@
           <label for="message">Isi Pesan</label>
           <textarea id="message" placeholder="Ketik pesan yang ingin dikirim..." required></textarea>
         </div>
-        <button type="submit" id="send-btn" class="btn-primary" style="width: auto;">
+        <button type="submit" id="send-btn" class="btn-primary">
           <span>Kirim Pesan</span>
         </button>
         <div id="send-result" class="alert"></div>
       </form>
     </div>
 
-    <!-- Bot Command Info -->
+    <!-- Gateway Info -->
     <div class="card">
-      <h2>Fitur Listener Bot</h2>
+      <h2>Fitur Gateway & Bot</h2>
       <div class="info-box">
-        <p>• <strong>Chat Personal & Grup:</strong> Bot mendengarkan semua pesan yang masuk.</p>
-        <p>• <strong>Prefix Perintah:</strong> Hanya pesan yang diawali kata <code>nad,</code> (misal: <code>nad, konfirmasi</code>) yang akan dibalas oleh bot.</p>
-        <p>• <strong>Autentikasi & Keamanan:</strong> Login web dilindungi password yang di-hash dengan <code>scrypt</code>.</p>
+        <p>• <strong>Penerusan Webhook:</strong> Semua pesan masuk diteruskan ke Webhook URL Anda dengan payload JSON terstandar.</p>
+        <p>• <strong>Prefix Perintah:</strong> Pesan diawali <code>nad,</code> otomatis terdeteksi sebagai perintah bot (<code>isCommand: true</code>).</p>
+        <p>• <strong>Hemat Resource:</strong> Berjalan di atas Baileys murni tanpa browser Chromium, sangat ramah untuk VPS spek kecil.</p>
       </div>
     </div>
   </div>
@@ -370,6 +493,15 @@
     const sendBtn = document.getElementById('send-btn');
     const sendResult = document.getElementById('send-result');
 
+    const webhookForm = document.getElementById('webhook-form');
+    const webhookUrlInput = document.getElementById('webhook-url');
+    const saveWebhookBtn = document.getElementById('save-webhook-btn');
+    const testWebhookBtn = document.getElementById('test-webhook-btn');
+    const webhookResult = document.getElementById('webhook-result');
+
+    const logsContainer = document.getElementById('logs-container');
+    const logCount = document.getElementById('log-count');
+
     let qrCodeObj = null;
     let lastQR = null;
     let pollTimer = null;
@@ -389,6 +521,7 @@
     function showDashboard() {
       authScreen.style.display = 'none';
       dashboardScreen.style.display = 'flex';
+      loadWebhookUrl();
       checkStatus();
       if (!pollTimer) {
         pollTimer = setInterval(checkStatus, 3000);
@@ -452,7 +585,7 @@
       showLogin();
     });
 
-    // Check WhatsApp Connection Status
+    // Check WhatsApp Connection Status & Fetch Logs
     async function checkStatus() {
       const token = getToken();
       if (!token) {
@@ -502,10 +635,146 @@
             qrHint.textContent = 'Menunggu kode QR dari WhatsApp...';
           }
         }
+
+        // Fetch recent logs
+        loadActivityLogs();
       } catch (err) {
         statusBadge.className = 'status-badge disconnected';
         statusText.textContent = 'Offline / Gagal Terhubung';
       }
+    }
+
+    // Load Webhook URL
+    async function loadWebhookUrl() {
+      const token = getToken();
+      try {
+        const res = await fetch('/webhook', {
+          headers: { 'x-api-key': token }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          webhookUrlInput.value = data.webhookUrl || '';
+        }
+      } catch {}
+    }
+
+    // Save Webhook URL
+    webhookForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token = getToken();
+      const url = webhookUrlInput.value.trim();
+
+      saveWebhookBtn.disabled = true;
+      webhookResult.className = 'alert';
+      webhookResult.style.display = 'none';
+
+      try {
+        const res = await fetch('/webhook', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': token
+          },
+          body: JSON.stringify({ url })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          webhookResult.className = 'alert success';
+          webhookResult.textContent = 'Webhook URL berhasil disimpan!';
+        } else {
+          webhookResult.className = 'alert error';
+          webhookResult.textContent = 'Gagal menyimpan: ' + (data.error || 'Terjadi kesalahan');
+        }
+      } catch (err) {
+        webhookResult.className = 'alert error';
+        webhookResult.textContent = 'Error: ' + err.message;
+      } finally {
+        saveWebhookBtn.disabled = false;
+      }
+    });
+
+    // Test Webhook Ping
+    testWebhookBtn.addEventListener('click', async () => {
+      const token = getToken();
+      testWebhookBtn.disabled = true;
+      webhookResult.className = 'alert';
+      webhookResult.style.display = 'none';
+
+      try {
+        const res = await fetch('/webhook/test', {
+          method: 'POST',
+          headers: { 'x-api-key': token }
+        });
+        const data = await res.json();
+        if (data.success) {
+          webhookResult.className = 'alert success';
+          webhookResult.textContent = 'Ping Webhook Berhasil: ' + data.status;
+        } else {
+          webhookResult.className = 'alert error';
+          webhookResult.textContent = 'Ping Webhook Gagal: ' + data.status;
+        }
+      } catch (err) {
+        webhookResult.className = 'alert error';
+        webhookResult.textContent = 'Gagal menghubungi server: ' + err.message;
+      } finally {
+        testWebhookBtn.disabled = false;
+      }
+    });
+
+    // Load Activity Logs
+    async function loadActivityLogs() {
+      const token = getToken();
+      try {
+        const res = await fetch('/logs', {
+          headers: { 'x-api-key': token }
+        });
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const logs = data.logs || [];
+        logCount.textContent = logs.length + ' aktivitas';
+
+        if (logs.length === 0) {
+          logsContainer.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 16px;">Belum ada pesan masuk tercatat...</p>';
+          return;
+        }
+
+        logsContainer.innerHTML = logs.map(l => {
+          const timeStr = new Date(l.timestamp).toLocaleTimeString();
+          const isCmdBadge = l.isCommand ? '<span class="badge badge-cmd">NAD, CMD</span>' : '';
+          const groupBadge = l.isGroup ? '<span class="badge badge-group">Grup</span>' : '<span class="badge badge-neutral">Personal</span>';
+          
+          let whBadge = '<span class="badge badge-neutral">No Webhook</span>';
+          if (l.webhookStatus) {
+            if (l.webhookStatus.startsWith('200') || l.webhookStatus.startsWith('201') || l.webhookStatus.startsWith('204')) {
+              whBadge = `<span class="badge badge-ok">WH: ${l.webhookStatus}</span>`;
+            } else if (l.webhookStatus !== 'No Webhook configured') {
+              whBadge = `<span class="badge badge-err">WH: ${l.webhookStatus}</span>`;
+            }
+          }
+
+          const senderName = l.pushName ? `${l.pushName} (${l.from})` : l.from;
+
+          return `
+            <div class="log-item">
+              <div class="log-header">
+                <span class="log-sender">${escapeHtml(senderName)} ${groupBadge} ${isCmdBadge}</span>
+                <span class="log-time">${timeStr} | ${whBadge}</span>
+              </div>
+              <div class="log-msg">${escapeHtml(l.message || '')}</div>
+            </div>
+          `;
+        }).join('');
+      } catch {}
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
     }
 
     // Handle Send Message
@@ -546,7 +815,7 @@
       }
     });
 
-    // Check on startup if token already exists
+    // Check startup
     if (getToken()) {
       showDashboard();
     } else {
